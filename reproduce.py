@@ -19,9 +19,11 @@ from itertools import groupby
 from src.common.paths import param_file
 from src.data.cascade import available_countries, load_cascade
 from src.data.cost_of_living import load_cost_of_living
+from src.data.pension import load_pension, load_calibration
 from src.engine.conversion import conversion
 from src.engine.purchasing_power import real_purchasing_power
 from src.engine.benchmark import stay_or_leave
+from src.engine.pension import pension_switch
 
 SMIC_ANNUAL_COST = 28000  # borne de la zone de transferts (profil et pays de référence)
 
@@ -64,7 +66,26 @@ def main() -> None:
         for c in comps:
             print(f"  {c.position:>8} {c.real_pp_origin:>12.0f} {c.real_pp_destination:>12.0f} "
                   f"{c.leave_gain_intl_usd:>12.0f}  {'PARTIR' if c.leave_dominates else 'rester'}")
-    # TODO engine : flux patrimonial Pi (immobilier, surplus, retraite, contrepoids), Bellman, matrice.
+    # --- Bascule retraite (D5) : patrimoine terminal gagné en quittant la répartition ---
+    pen = load_pension()
+    cal = load_calibration()
+    if "fr" in pen:
+        fr_ppp = col["fr"].ppp_aic_local_per_intl_usd
+        fr_cascade = load_cascade("fr")
+        print("\n=== Bascule retraite : gain de patrimoine terminal en quittant la France ===")
+        print(f"    (r_rep={cal.r_rep_real:.1%}, r_mkt={cal.r_mkt_real:.1%}, {cal.career_years} ans ; "
+              f"célibataire ; patrimoine terminal en milliers de $ int.)")
+        for dest in ("us", "uk"):
+            if dest not in pen:
+                continue
+            sw = [s for s in pension_switch(fr_cascade, pen["fr"], pen[dest], cal)
+                  if s.profile == "celibataire"]
+            print(f"\n  France -> {dest.upper()} ({pen['fr'].regime} -> {pen[dest].regime})")
+            print(f"  {'position':>8} {'cotis./an':>12} {'gain bascule (k$int)':>22}")
+            for s in sw:
+                print(f"  {s.position:>8} {s.annual_contribution:>12.0f} "
+                      f"{s.switch_gain_lifetime / fr_ppp / 1000:>22.0f}")
+    # TODO engine : surplus investi net fiscalité (D6), immobilier (D4), contrepoids ; puis Bellman.
 
 
 if __name__ == "__main__":

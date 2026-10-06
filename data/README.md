@@ -108,6 +108,14 @@ plafonnent. Le détail par pays est dans `data/sources.yaml` (bloc `tax_engines`
 
 ### D5 — Système de retraite et bascule charge → actif
 
+**Première brique posée (`pension.csv`, `calibration.csv`, `src/engine/pension.py`).** Régime
+par pays (répartition FR/DE/IT/ES/JP, capitalisation US/UK/CH/CA, classification du cadre),
+part de cotisation retraite (FR 27,8 % du brut OCDE, US OASDI 12,4 %, UK auto-enrolment 8 %),
+r_rep/r_mkt/horizon en calibration déclarée (statut par valeur). Gain de bascule = flux retraite
+revalorisé de r_rep à r_mkt sur l'horizon. À affiner : parts des six autres pays, r_rep par pays
+(démographie, D14), extraction exacte par microsimulateur.
+
+
 | Donnée | Symbole | Granularité | Source primaire | Source secondaire / repli | Accès | Statut |
 |--------|---------|-------------|-----------------|---------------------------|-------|--------|
 | Taux de remplacement (répartition) | — | pays, par niveau de revenu | OCDE *Pensions at a Glance* 2023/2025 | FR : COR ; national | SDMX ; PDF | partiel |

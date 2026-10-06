@@ -1,0 +1,8 @@
+# Paramètres de calibration structurels (hypothèses déclarées, pas de la donnée observée).
+# Statut : [S] sourcé, [E] estimé, [I] posé (cf. docs/internal/research/audit-sources.md).
+# r_rep = rendement implicite de la répartition ~ croissance de la masse salariale
+#         (démographie + productivité) ; r_mkt = rendement réel long terme d'un portefeuille.
+param,value,status,source
+r_rep_real,0.012,[E],"cadre ; ~ croissance masse salariale (démographie+productivité), OCDE/COR"
+r_mkt_real,0.045,[I],"calibration ; rendement réel long terme portefeuille, DMS/Damodaran"
+career_years,40,[I],"entrée en activité ~25 ans à retraite ~65 ans"

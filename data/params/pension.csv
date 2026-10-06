@@ -1,0 +1,11 @@
+# Retraite (bloc D5) : régime et part de cotisation retraite, par pays.
+# regime : payg (répartition, rendement implicite r_rep) ou funded (capitalisation, r_mkt).
+#          Classification reprise du cadre (Partie C) : répartition FR/DE/IT/ES/JP ;
+#          capitalisation US/UK/CH/CA (401k, DC, LPP, RRSP).
+# contrib_share_cost : flux retraite capté (patronal+salarial) en part du COÛT employeur.
+# Statut par valeur : [S] sourcé, [E] estimé/dérivé. Première calibration, à affiner
+# (extraction exacte par microsimulateur ; r_rep par pays via démographie, bloc D14).
+country,regime,contrib_share_cost,status,source
+fr,payg,0.196,[E],"OCDE Pensions at a Glance 2024 : 27,8% du brut / ~1,42 coût sur brut"
+us,funded,0.124,[S],"OASDI 12,4% (SSA, statutaire) ; pilier capitalisé 401k au-dessus"
+uk,funded,0.080,[S],"auto-enrolment 8% DC (statutaire, gov.uk)"
