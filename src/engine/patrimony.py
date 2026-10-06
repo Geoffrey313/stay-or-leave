@@ -50,6 +50,7 @@ class Patrimony(BaseModel):
     country: str
     profile: str
     position: str
+    real_pp_intl_usd: float    # pouvoir d'achat réel annuel (sert à la translation de rang, D7)
     consumption_pv: float
     pension_pv_gross: float
     surplus_pv_gross: float
@@ -89,6 +90,7 @@ def lifetime_patrimony(points: List[CascadePoint], col: Dict[str, CostOfLiving],
 
         out.append(Patrimony(
             country=c, profile=p.profile, position=p.position,
+            real_pp_intl_usd=round(real_pp, 1),
             consumption_pv=round(consumption_pv),
             pension_pv_gross=round(pension_pv_gross),
             surplus_pv_gross=round(surplus_pv_gross),

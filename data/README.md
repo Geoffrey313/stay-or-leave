@@ -156,6 +156,19 @@ rester au P99.
 
 ### D7 — Prime salariale pour rôle comparable
 
+**Brique posée (`wage_premium.csv`, `src/engine/wage_premium.py`) ET résultat de premier ordre.**
+φ est une TRANSLATION DE RANG, pas un facteur de niveau : l'écart de niveau salarial est déjà
+porté par l'ancrage de chaque cascade sur sa distribution ; réappliquer le ratio de salaire moyen
+serait un double-compte. φ répond à « un cadre FR-percentile p atterrit à quel percentile de
+destination ? », via la rémunération réelle à rôle comparable (`role_ratio_ppp`). Constat : sous
+role_ratio=1 (même rémunération réelle comparable, atterrissage plus bas dans une distribution plus
+riche), le gain « partir » FR→US **s'effondre et passe négatif dès P50** (P99,9 : +11,6 M$ à φ=1 →
+−1,1 M$). Le « partir gagne au sommet » à φ=1 venait donc du NIVEAU (hypothèse optimiste), pas d'un
+vrai avantage de rang. La réponse dépend entièrement de la prime à rôle comparable réelle, à SOURCER
+(Eurostat SES par profession, BLS OES, ECA/Mercer) — c'est du premier ordre, pas une sensibilité.
+Friction (diplôme, langue, chômage initial) = bloc D8 (κ), jamais dans φ.
+
+
 | Donnée | Symbole | Granularité | Source primaire | Source secondaire / repli | Accès | Statut |
 |--------|---------|-------------|-----------------|---------------------------|-------|--------|
 | Salaire moyen comparable | $\phi$, $\rho_w$ | pays, 2025–2026 | OCDE *Average Wages* | Eurostat *Structure of Earnings* ; BLS OES (US) | SDMX | partiel |

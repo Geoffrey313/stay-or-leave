@@ -27,6 +27,8 @@ from src.engine.benchmark import stay_or_leave
 from src.engine.pension import pension_switch
 from src.engine.surplus import surplus_switch
 from src.engine.patrimony import lifetime_patrimony, stay_or_leave_lifetime
+from src.data.wage_premium import load_wage_premium
+from src.engine.wage_premium import translate_rank
 
 SMIC_ANNUAL_COST = 28000  # borne de la zone de transferts (profil et pays de référence)
 
@@ -123,9 +125,28 @@ def main() -> None:
         for c in comps:
             print(f"  {c.position:>8} {c.pi_origin_ce/1e6:>11.2f} {c.pi_destination_ce/1e6:>11.2f} "
                   f"{c.leave_gain_ce/1e6:>12.2f}  {'PARTIR' if c.leave_dominates_ce else 'rester'}")
-    print("\n    NB : Pi à phi=1 n'est pas la réponse finale rester/partir ; D7 (prime salariale)")
-    print("    relâche phi, D4 (immobilier) ajoute le logement ; la Bellman fera l'ajustement de")
-    print("    risque canonique une fois (âge, réversibilité, coût de migration).")
+    # --- D7 : translation de rang (phi), nette du niveau déjà ancré ---
+    wp = load_wage_premium()
+    print("\n=== D7 prime salariale : phi=1 (même percentile) vs translation de rang ===")
+    print("    (le niveau est DÉJÀ ancré ; role_ratio=rémunération réelle à rôle comparable, net")
+    print("     du niveau ; gain partir en équivalent-certain, M$ int. ; célibataire)")
+    for dest in ("us", "uk"):
+        if dest not in pat or dest not in wp:
+            continue
+        rr = wp[dest].role_ratio_ppp
+        same_pct = {c.position: c.leave_gain_ce for c in stay_or_leave_lifetime(pat["fr"], pat[dest])
+                    if c.profile == "celibataire"}
+        rank = [t for t in translate_rank(pat["fr"], pat[dest], rr) if t.profile == "celibataire"]
+        print(f"\n  France -> {dest.upper()} (role_ratio={rr:.2f})")
+        print(f"  {'position':>8} {'gain phi=1':>12} {'gain rang':>12}  lecture")
+        for t in rank:
+            g1 = same_pct.get(t.position, 0.0) / 1e6
+            g2 = t.leave_gain_ce / 1e6
+            note = "rang abaisse le gain" if g2 < g1 - 0.005 else ("rang relève" if g2 > g1 + 0.005 else "≈")
+            print(f"  {t.position:>8} {g1:>12.2f} {g2:>12.2f}  {note}")
+    print("\n    NB : role_ratio=1 (défaut) suppose une rémunération réelle comparable identique :")
+    print("    l'agent atterrit PLUS BAS dans une distribution de destination plus riche, donc le")
+    print("    gain chute vs phi=1. phi=1 était optimiste. À sourcer (rôle comparable) ; friction = kappa (D8).")
 
 
 if __name__ == "__main__":

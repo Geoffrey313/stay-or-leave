@@ -1,0 +1,15 @@
+# Prime salariale phi (bloc D7) : TRANSLATION DE RANG, pas facteur de niveau.
+# L'écart de NIVEAU salarial entre pays est DÉJÀ porté par l'ancrage de chaque cascade sur
+# SA distribution (US P90 est intrinsèquement plus riche que FR P90). phi ne doit donc PAS
+# réappliquer le ratio de salaire moyen économie-entière (double-compte). phi répond à :
+# « un cadre à FR-percentile p atterrit à quel percentile de destination ? ».
+# role_ratio_ppp = rémunération RÉELLE à rôle comparable à destination / en France (en $ int.),
+# NETTE du niveau déjà ancré. =1 : même rémunération réelle comparable (l'agent atterrit au
+# percentile de destination qui a ce revenu réel, plus bas si la destination est plus riche).
+# >1 : le rôle est relativement mieux payé à destination. À sourcer sur rémunération à rôle
+# comparable (Eurostat SES par profession, BLS OES, ECA/Mercer) ; défaut 1,0 déclaré, scénarios
+# de sensibilité en attendant. La friction (reconnaissance diplôme, langue, chômage) est le bloc
+# D8 (kappa), PAS phi : phi relâche phi=1 sur l'upside, kappa portera le downside.
+destination,role_ratio_ppp,status,source
+us,1.0,[I],"défaut neutre ; à sourcer rémunération cadre comparable US/FR nette du niveau"
+uk,1.0,[I],"défaut neutre ; à sourcer rémunération cadre comparable UK/FR nette du niveau"
