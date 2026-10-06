@@ -189,7 +189,8 @@ def main() -> None:
 
     # --- Modèle dynamique : Bellman, seuil de départ par âge y*(t) ---
     dyn = load_dynamics()
-    ages, bpos, breal, thr = bellman_solve("fr", "us", col, pen, tax, house, cal, dyn)
+    res = bellman_solve("fr", "us", col, pen, tax, house, cal, dyn)
+    thr = res.threshold
     print("\n=== Bellman dynamique : seuil de départ par âge, France -> US ===")
     print(f"    (état âge×pays×position×pot funded ; r_rep={cal.r_rep_real:.1%} vs funded EC="
           f"{cal.r_mkt_certainty_equivalent:.1%} ; kappa={dyn.kappa:.0f}, A={dyn.amenity:.0f}, lambda={dyn.lambda_return} ;")

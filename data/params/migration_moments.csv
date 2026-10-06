@@ -1,0 +1,10 @@
+# Moments observés des flux migratoires (bloc D13), pour la méthode des moments simulés qui
+# estime kappa et A. GROSSIERS et flaggés [E] : les sources sont agrégées, sélectionnées et
+# stock-vs-flux (cf. docs/internal/research/estimation-design.md). Identification au niveau du
+# PROFIL d'âge et de la composition, pas fine ; dégradation déclarée si le critère est plat.
+# Sources : MEAE Registre des Français établis hors de France (structure d'âge, stock) ;
+# OCDE International Migration Database / DIOC (retours, bilatéral). À raffiner.
+moment,value,status,source
+peak_departure_age,30,[E],"départs de cadres concentrés fin 20taine / ~30 ans (MEAE/INSEE expatriés)"
+emigrant_share,0.06,[E],"part de cadres ayant émigré, ordre de grandeur (registre MEAE / population)"
+return_rate,0.50,[E],"part des expatriés qui rentrent à terme, ordre de grandeur (OCDE retours)"
