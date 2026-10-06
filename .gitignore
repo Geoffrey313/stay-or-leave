@@ -1,0 +1,48 @@
+# ============================================================
+# Politique de publication (research-repo-rules §6)
+# Inclus au dépôt : src/, reproduce.py, data/ (transformées),
+# data/README.md, README.md, .env.example, requirements.txt.
+# Tout le reste ci-dessous reste dans le workspace, jamais poussé.
+# ============================================================
+
+# --- Manuscrits (tous exclus, EN + FR + versions journal) ---
+manuscript/
+
+# --- Résultats générés (reproductibles par le code, jamais stockés) ---
+results/
+outputs/
+
+# --- Notes de travail, framework exploratoire, audit ---
+docs/internal/
+
+# --- Acquisition des données brutes (hors chaîne de reproduction) ---
+data-acquisition/
+data/raw/
+
+# --- Secrets ---
+.env.local
+.env
+
+# --- Caches et artefacts Python ---
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ipynb_checkpoints/
+.venv/
+venv/
+.mypy_cache/
+.ruff_cache/
+.venv-acq/
+.venv-repro/
+
+# --- Artefacts de compilation LaTeX ---
+*.aux
+*.log
+*.fls
+*.fdb_latexmk
+*.bbl
+*.blg
+*.out
+*.toc
+*.synctex.gz
+manuscript/**/*.pdf

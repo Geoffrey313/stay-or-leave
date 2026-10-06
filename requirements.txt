@@ -1,0 +1,13 @@
+# Environnement de REPRODUCTION (reproduce.py). Pins résolus et vérifiés dans .venv-repro.
+# L'acquisition des paramètres (OpenFisca, etc.) a son propre environnement :
+# voir requirements-acquisition.txt. Les deux sont séparés à dessein car OpenFisca-Core
+# tire une version de numpy incompatible avec certains pins de reproduction.
+numpy==2.4.6
+scipy==1.17.1
+pandas==3.0.6
+pydantic==2.13.5
+pyyaml==6.0.3
+matplotlib==3.11.2
+pytest==9.1.1
+# numba : différé. Sera ajouté avec un pin numpy compatible quand le solveur Bellman
+# (src/engine) aura besoin de la compilation JIT, pas avant.

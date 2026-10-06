@@ -1,0 +1,195 @@
+# Données de reproduction — « Rester ou partir »
+
+Ce dossier documente et versionne les **données transformées** qui alimentent la
+chaîne de reproduction (`reproduce.py`). Les données brutes et les scripts qui les
+téléchargent restent hors du dépôt (`data-acquisition/`, ignoré par git). Chaque
+entrée du modèle est un **paramètre** daté millésime 2026 ; le dépôt est donc une
+base de paramètres, pas un panel d'observations.
+
+## Périmètre
+
+Neuf pays, avec granularité infra-nationale là où le modèle la fixe :
+
+| Code | Pays | Juridiction retenue | Villes de référence (rang urbain q) |
+|------|------|---------------------|-------------------------------------|
+| FR | France | national | Paris (1,0), Lyon (0,7), ville moyenne (0,4) |
+| US | États-Unis | Texas (sans impôt d'État) | Austin (0,7) |
+| CH | Suisse | canton de Zoug | Bâle / canton (0,7) |
+| UK | Royaume-Uni | national | Londres, ville secondaire |
+| DE | Allemagne | national | Berlin (0,7) |
+| CA | Canada | Ontario | Toronto, ville secondaire |
+| IT | Italie | national | Milan, ville secondaire |
+| ES | Espagne | Madrid | Madrid |
+| JP | Japon | national | Tokyo, ville secondaire |
+
+Unité de compte primitive : le **coût total employeur** annuel C (ce que l'employeur
+débourse), pas le brut ni le net.
+
+## Statut de collecte
+
+`manquant` = à collecter · `partiel` = valeurs illustratives dans le framework, à
+sourcer et recalculer · `collecté` = versionné et tracé dans ce dossier.
+
+**Provenance des valeurs actuelles du framework.** Le ledger
+`docs/internal/research/audit-sources.md` (notes de travail, hors dépôt) classe chaque
+paramètre existant en sourcé / estimé / inventé. Points fermes, à ne pas recollecter :
+barèmes socio-fiscaux France 2026, dette étudiante UK/US/FR (OCDE *Education at a Glance*
+2025), cadre santé US (plafond de reste à charge, coverage gap, seuil de pauvreté fédéral),
+profil salaire-âge INSEE, fiscalité du capital FR et CH. Trou central : θ(C) hors France,
+entièrement posé par typologie. Chaque paramètre qui passe d'inventé ou estimé à sourcé
+reçoit sa référence datée dans ce ledger.
+
+## Table des besoins de données
+
+### D1 — Cascade socio-fiscale θ(C) : coût employeur → pouvoir d'achat
+
+**Stratégie (validée) : hybride.** Microsimulation où elle existe (OpenFisca-France,
+OpenFisca-US / TAXSIM pour le fédéral + Texas, PolicyEngine-UK), moteur EUROMOD pour
+DE/IT/ES (accès licence JRC sur inscription ; repli OCDE + barèmes nationaux le temps
+de l'obtenir), et barèmes statutaires 2026 codés à la main pour CH (canton de Zoug),
+CA (Ontario), JP et pour la queue haute (> 250 % du salaire moyen) que les moteurs
+plafonnent. Le détail par pays est dans `data/sources.yaml` (bloc `tax_engines`).
+
+
+| Donnée | Symbole | Granularité | Source primaire | Source secondaire / repli | Accès | Statut |
+|--------|---------|-------------|-----------------|---------------------------|-------|--------|
+| Cotisations patronales (barème, assiettes, plafonds) | — | pays/juridiction, 2026 | OCDE *Taxing Wages* 2026 | Autorités nationales (FR : URSSAF, PLFSS 2026) ; PwC/EY *Worldwide Tax Summaries* | OCDE SDMX ; portails nationaux | partiel |
+| Cotisations salariales | — | pays, 2026 | OCDE *Taxing Wages* 2026 | idem national | SDMX | partiel |
+| Barème d'impôt sur le revenu (tranches, décote, quotient) | — | pays + État/canton, 2026 | Autorités fiscales nationales | OCDE *Tax Database* ; PwC/KPMG/EY | portails ; PDF barèmes | partiel |
+| Impôt infra-national (État/canton/région) | — | TX, Zoug, Ontario, Madrid | Administrations locales (ESTV Zoug, CRA Ontario, Agencia Madrid) | KPMG cantons suisses ; Tax Foundation (US) | portails | manquant |
+| Taxe sur la consommation (TVA / sales tax, taux effectif panier) | — | pays/juridiction, 2026 | OCDE *Consumption Tax Trends* | Commission UE *VAT rates* ; Tax Foundation (TX sales tax) | SDMX ; PDF | partiel |
+
+### D2 — Zone de transferts (sous le salaire minimum)
+
+| Donnée | Symbole | Granularité | Source primaire | Source secondaire / repli | Accès | Statut |
+|--------|---------|-------------|-----------------|---------------------------|-------|--------|
+| Salaire minimum | $\underline{y}$ | pays, 2026 | OCDE *Minimum Wages* ; Eurostat | Autorités nationales (SMIC, NLW, Mindestlohn, SMI) | SDMX | partiel |
+| Revenu minimum garanti | $\tau^{+}$ | pays, 2026 | OCDE *TaxBEN* (modèle prestations) | MISSOC (UE) ; agences nationales | tableurs TaxBEN | manquant |
+| Complément d'activité / in-work benefit | $\tau^{+}$ | pays | OCDE *TaxBEN* | FR : prime d'activité ; US : EITC ; UK : Universal Credit | tableurs | manquant |
+| Aide au logement | $\tau^{+}$ | pays | OCDE *TaxBEN* | FR : APL (CNAF) ; MISSOC | tableurs | manquant |
+| Prestations sous condition de ressources (extinction) | $b_k(C)$ | pays | OCDE *TaxBEN* | agences nationales | tableurs | manquant |
+
+### D3 — Coût de la vie et pouvoir d'achat réel
+
+| Donnée | Symbole | Granularité | Source primaire | Source secondaire / repli | Accès | Statut |
+|--------|---------|-------------|-----------------|---------------------------|-------|--------|
+| Indice du niveau des prix (base France = 100) | $\mathrm{IC}_p$ | pays, 2026 | OCDE *Comparative Price Levels* (PPA) | Eurostat *Price Level Indices* | SDMX | partiel |
+| Indice coût de la vie par ville | $\mathrm{IC}_p(q)$ | ville (540+) | Numbeo *Cost of Living* (pages web publiques : `rankings.jsp`, `/cost-of-living/in/<ville>`) | Mercer / ECA | web public gratuit (API = option payante) | manquant |
+
+### D4 — Immobilier comme flux capitalisable
+
+| Donnée | Symbole | Granularité | Source primaire | Source secondaire / repli | Accès | Statut |
+|--------|---------|-------------|-----------------|---------------------------|-------|--------|
+| Prix au m² par ville / rang urbain | $P_{m^2}(p,q)$ | ville | Numbeo *Property Investment* (`property-investment/rankings.jsp`, profils par ville) | Deloitte *Property Index* ; stats nationales (INSEE/Notaires, Destatis) | web public gratuit ; PDF | manquant |
+| Loyer au m² par ville | $\ell_p(C,q)$ | ville | Numbeo *Rent* (profils par ville : loyer 1 et 3 pièces, centre/périphérie) | idem national | web public gratuit | manquant |
+| Taux de crédit immobilier | $r_m$ | pays, 2026 | Banques centrales (Banque de France, Freddie Mac US, BoE, Bundesbank) | OCDE *Analytical House Prices* | FRED ; SDMX | manquant |
+| Taux d'endettement maximal admissible | $\bar{\eta}$ | pays | Régulateurs (HCSF France ~35 %) | normes bancaires nationales | doc | partiel |
+| Frais de transaction / portage | — | pays | Notaires / barèmes nationaux | Global Property Guide | web | manquant |
+
+### D5 — Système de retraite et bascule charge → actif
+
+| Donnée | Symbole | Granularité | Source primaire | Source secondaire / repli | Accès | Statut |
+|--------|---------|-------------|-----------------|---------------------------|-------|--------|
+| Taux de remplacement (répartition) | — | pays, par niveau de revenu | OCDE *Pensions at a Glance* 2023/2025 | FR : COR ; national | SDMX ; PDF | partiel |
+| Rendement implicite de la répartition | $r_{\mathrm{rep}}(C)$ | pays | Croissance masse salariale = démographie + productivité (D14) | projections nationales (COR) | dérivé | manquant |
+| Pilier capitalisé (taux, plafonds : 401k, RRSP, DC, LPP) | — | pays, 2026 | Autorités (IRS, CRA, OFAS LPP) | OCDE *Pensions at a Glance* | portails | manquant |
+| Âge de départ / horizon de travail | $T_w$ | pays | OCDE *Pensions at a Glance* | national | SDMX | partiel |
+| Rendement de marché (capitalisation) | $r_{\mathrm{mkt}}$ | global | *Global Investment Returns Yearbook* (UBS/DMS) | prime de risque académique | annuaire | partiel |
+
+### D6 — Fiscalité du capital
+
+| Donnée | Symbole | Granularité | Source primaire | Source secondaire / repli | Accès | Statut |
+|--------|---------|-------------|-----------------|---------------------------|-------|--------|
+| Impôt sur les plus-values mobilières | $\tau_k$ | pays, 2026 | OCDE *Tax Database* | PwC/KPMG/EY *Worldwide Tax Summaries* 2026 | SDMX ; web | partiel |
+| Imposition des dividendes | — | pays | OCDE *Tax Database* | idem | SDMX | manquant |
+| Impôt sur la fortune (portefeuille) | — | pays/canton (CH) | Administrations (ESTV Zoug) | KPMG | portails | partiel |
+
+### D7 — Prime salariale pour rôle comparable
+
+| Donnée | Symbole | Granularité | Source primaire | Source secondaire / repli | Accès | Statut |
+|--------|---------|-------------|-----------------|---------------------------|-------|--------|
+| Salaire moyen comparable | $\phi$, $\rho_w$ | pays, 2025–2026 | OCDE *Average Wages* | Eurostat *Structure of Earnings* ; BLS OES (US) | SDMX | partiel |
+| Écart de rémunération par métier (cadre) | $\phi$ | pays/profession | ECA International / Mercer *Pay* | enquêtes package expat | payant | manquant |
+| Volatilité relative du revenu expatrié | $\sigma_p$ | pays | littérature migration | dérivé enquêtes | — | manquant |
+
+### D8 — Coût de migration et aménité
+
+| Donnée | Symbole | Granularité | Source primaire | Source secondaire / repli | Accès | Statut |
+|--------|---------|-------------|-----------------|---------------------------|-------|--------|
+| Coût fixe d'installation | $\kappa_0$ | pays | barèmes relocation (ECA/Mercer) | devis déménagement international | payant | manquant |
+| Friction linguistique | $f^{\mathrm{ling}}$ | paire origine-destination | indices de distance linguistique (Melitz-Toubal) | — | littérature | manquant |
+| Risque d'emploi initial (mois) | $n^{\mathrm{mois}}$ | pays | durées de recherche d'emploi (OCDE) | enquêtes expat | SDMX | manquant |
+| Aménité « chez soi » | $A$ | — | calibrée par écart seuil statique/dynamique | — | interne au modèle | partiel |
+
+### D9 — Risque santé (reste à charge équivalent-certain)
+
+| Donnée | Symbole | Granularité | Source primaire | Source secondaire / repli | Accès | Statut |
+|--------|---------|-------------|-----------------|---------------------------|-------|--------|
+| Reste à charge moyen | $m^{\mathrm{san}}$ | pays | OCDE *Health Statistics* (OOP) | WHO *Global Health Expenditure* | SDMX | partiel |
+| Reste à charge catastrophique (queue) | $m^{\mathrm{san}}$ | pays | OCDE ; Commonwealth Fund | US : KFF / Peterson-KFF, MEPS | web ; API | manquant |
+| Dépendance au revenu (US : Medicaid, subventions ACA, coverage gap) | $m^{\mathrm{san}}(C)$ | US par revenu/État | KFF | HealthCare.gov barèmes 2026 | web | manquant |
+
+### D10 — Éducation : coût des études des enfants et dette passée de l'agent
+
+Deux composantes distinctes, toutes deux dans le flux éducation du modèle (PDF §23) : le
+coût prospectif des études des enfants, et la dette étudiante passée que l'agent traîne.
+
+| Donnée | Symbole | Granularité | Source primaire | Source secondaire / repli | Accès | Statut |
+|--------|---------|-------------|-----------------|---------------------------|-------|--------|
+| Frais universitaires par enfant (public / privé) | $u^{\mathrm{tui}}$ | pays, 2026 | OCDE *Education at a Glance* 2025 | US : College Board ; UK : plafond £9 250 | SDMX ; web | partiel |
+| Coût actualisé des études de n enfants | $e_p(C,n)$ | dérivé | — | — | calculé | manquant |
+| Part de diplômés endettés | — | pays | OCDE *Education at a Glance* 2025 | US : Fed ; FR : OVE/Sénat | web | partiel (UK/US/FR sourcés) |
+| Dette étudiante médiane (endettés) | — | pays | OCDE *Education at a Glance* 2025 | national | web | partiel (UK/US/FR sourcés) |
+| Scénario « aspiration élite » (interpolation revenu) | — | — | hypothèse structurelle | — | posé | inventé, à assumer |
+
+### D11 — Processus de revenu de cycle de vie
+
+| Donnée | Symbole | Granularité | Source primaire | Source secondaire / repli | Accès | Statut |
+|--------|---------|-------------|-----------------|---------------------------|-------|--------|
+| Profil salaire-âge (cadres) | $g(t)$ | FR, par âge | INSEE *base Tous salariés* (ex-DADS) | OCDE ; Eurostat SES | fichiers | partiel |
+| Variance du choc permanent | $\sigma_\eta$ | — | estimations académiques revenus permanents | INSEE panel | littérature | partiel |
+| Variance du choc transitoire | $\sigma_\varepsilon$ | — | idem | — | littérature | manquant |
+
+### D12 — Paramètres financiers et de préférences
+
+| Donnée | Symbole | Granularité | Source primaire | Source secondaire / repli | Accès | Statut |
+|--------|---------|-------------|-----------------|---------------------------|-------|--------|
+| Facteur d'actualisation (framework : ρ = 2 %) | $\beta$ | — | calibration standard cycle de vie | littérature | — | inventé |
+| Aversion au risque (framework : γ = 2) | $\gamma$ | — | littérature (CRRA ~2–5) | — | — | inventé |
+| Rendement de marché (framework : 4,5 % réel) | $r_{\mathrm{mkt}}$ | global | *Global Investment Returns Yearbook* | Damodaran | annuaire ; web | inventé |
+| Glide path actions/obligations (85 % → 30 %) | — | — | règle target-date (110 − âge) | — | — | estimé |
+
+**Paramètres structurels non observables.** L'aménité $A$ (framework : 45 000 €/an) et le
+coût de migration $\kappa$ ne s'observent pas directement. Décision (06/10/2026) : ils sont
+**estimés sur les flux migratoires** (bloc D13) par méthode des moments simulés, pas posés
+en paramètres libres. Design et caveats dans `docs/internal/research/estimation-design.md`.
+Repli documenté si l'identification échoue : les assumer en structurels, flux en validation.
+
+### D13 — Flux migratoires : identification de A et κ, puis validation
+
+Bloc promu en **identification** : $A$ et $\kappa$ sont estimés sur ces moments par méthode
+des moments simulés (design : `docs/internal/research/estimation-design.md`), les mêmes flux
+servant ensuite à valider le pic de départ par âge et la hiérarchie des destinations.
+
+| Donnée | Symbole | Granularité | Source primaire | Source secondaire / repli | Accès | Statut |
+|--------|---------|-------------|-----------------|---------------------------|-------|--------|
+| Stock de Français inscrits par pays et par âge/genre | — | pays × âge × genre, annuel | Registre des Français établis hors de France (MEAE), rapport annuel + open data data.gouv.fr | INSEE | web ; CSV open data | manquant |
+| Stocks bilatéraux origine→destination par âge/éducation | — | paire × âge × éducation | OCDE *DIOC* version consolidée 2020/21 (détail pays d'origine, sortie 2024) | national | SDMX ; fichiers | manquant |
+| Croisement par les registres d'accueil | — | destination × âge | stats nationales d'accueil (CH : OFS/SEM ; US : ACS ; UK : ONS ; etc.) | Eurostat *migr* | portails ; SDMX | manquant |
+| Taux de migration de retour | — | destination | OCDE *International Migration Database* | national | SDMX | manquant |
+| Taux d'expatriation global (éligibles) | — | national | MEAE stock / population | INSEE | portail | manquant |
+
+### D14 — Démographie pour le rendement de la répartition
+
+| Donnée | Symbole | Granularité | Source primaire | Source secondaire / repli | Accès | Statut |
+|--------|---------|-------------|-----------------|---------------------------|-------|--------|
+| Croissance démographique | — | pays | OCDE ; ONU *WPP* | national | SDMX | manquant |
+| Croissance de la productivité | — | pays | OCDE *Productivity* | national | SDMX | manquant |
+| Croissance de la masse salariale | — | pays | dérivé démographie + productivité | projections pension | calculé | manquant |
+
+## Traçabilité
+
+Chaque valeur collectée est consignée avec : millésime, date d'extraction, URL ou
+référence exacte, et unité. Le manifeste `sources.yaml` centralise les points
+d'accès. Aucune valeur n'est saisie en dur dans le code : les paramètres vivent dans
+`data/` et sont lus par `src/data/`.

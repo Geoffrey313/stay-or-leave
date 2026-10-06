@@ -1,0 +1,66 @@
+# Manifeste centralisé des sources de données (DRY : un point d'accès, un seul endroit).
+# Lu par la couche d'acquisition (data-acquisition/, hors dépôt) et documenté par data/README.md.
+# Les blocs D1..D14 suivent la table des besoins de data/README.md.
+
+countries: [FR, US, CH, UK, DE, CA, IT, ES, JP]
+jurisdictions: {US: Texas, CH: Zug, CA: Ontario, ES: Madrid}
+base_cost_of_living: FR   # IC_p = 100 pour la France
+vintage: 2026
+
+# Moteur fiscal (bloc D1) : stratégie hybride validée.
+# Microsimulation là où elle existe, barèmes statutaires 2026 codés à la main ailleurs
+# et pour la queue haute (>250% salaire moyen) que les moteurs plafonnent.
+tax_engines:
+  FR:        {engine: openfisca-france,  access: pip, status: installé, tail_high_income: barème_manuel}
+  US:        {engine: policyengine-us,   access: pip, status: "dispo PyPI v2.29 (fédéral + Texas) ; repli NBER TAXSIM"}
+  UK:        {engine: policyengine-uk,   access: pip, status: "dispo PyPI v2.122 ; repli UKMOD (licence JRC)"}
+  DE:        {engine: euromod,          access: jrc_licence, repli: "OCDE + BMF statutaire"}
+  IT:        {engine: euromod,          access: jrc_licence, repli: "OCDE + Agenzia Entrate"}
+  ES:        {engine: euromod,          access: jrc_licence, repli: "OCDE + Agencia Tributaria (Madrid)"}
+  CH:        {engine: barème_manuel,    access: statutaire,  note: "fédéral + canton de Zoug (ESTV)"}
+  CA:        {engine: barème_manuel,    access: statutaire,  note: "fédéral + Ontario (CRA) ; pas de paquet PyPI vérifié"}
+  JP:        {engine: barème_manuel,    access: statutaire,  note: "NTA 2026"}
+
+providers:
+  oecd_sdmx:
+    base: https://sdmx.oecd.org/public/rest/data
+    datasets: [TaxingWages, PensionsAtAGlance, PPP_ComparativePriceLevels, HealthStatistics, AverageWages, MinimumWages, TaxDatabase]
+    auth: none
+  eurostat:
+    base: https://ec.europa.eu/eurostat/api/dissemination
+    datasets: [prc_ppp_ind, prc_hpi_q, earn_ses]
+    auth: none
+  fred:
+    base: https://api.stlouisfed.org/fred
+    auth: FRED_API_KEY
+  numbeo:
+    web_public: https://www.numbeo.com   # pages gratuites : cost-of-living/rankings.jsp, property-investment/rankings.jsp, /cost-of-living/in/<ville>
+    api_base: https://www.numbeo.com/api  # option payante uniquement
+    datasets: [cost_of_living, property_prices, rent]
+    auth: "web = gratuit (débit limité) ; API = NUMBEO_API_KEY"
+  worldwide_tax_summaries:
+    providers: [PwC, EY, KPMG]
+    use: [D1, D6]
+    auth: web
+  national_tax_authorities:
+    FR: [URSSAF, impots.gouv.fr, PLFSS-2026]
+    US: [IRS, Texas-Comptroller]
+    CH: [ESTV, Zug-Steuerverwaltung]
+    UK: [HMRC]
+    DE: [BMF]
+    CA: [CRA, Ontario-Ministry-of-Finance]
+    IT: [Agenzia-Entrate]
+    ES: [Agencia-Tributaria, Comunidad-de-Madrid]
+    JP: [NTA]
+  migration_flows:   # D13 : identification de A et κ + validation
+    FR: [MEAE-rapport-annuel-Francais-etranger, data.gouv.fr-inscrits-registre, INSEE]
+    oecd: [DIOC-2020-21-consolide-2024, International-Migration-Database]
+    destination_registers: [CH-OFS-SEM, US-ACS, UK-ONS, Eurostat-migr]
+    granularity: "MEAE pays × âge × genre, annuel ; DIOC paire × âge × éducation"
+    use: [D13]
+  health_us:
+    providers: [KFF, Peterson-KFF, MEPS, HealthCare.gov]
+    use: [D9]
+  returns:
+    provider: UBS-DMS-Global-Investment-Returns-Yearbook
+    use: [D5, D12]
