@@ -1,0 +1,16 @@
+# Coût de la vie (bloc D3) : parités de pouvoir d'achat sur la CONSOMMATION EFFECTIVE des
+# ménages (actual individual consumption, A01), OCDE, 2024, en monnaie nationale par dollar
+# international. Base = panier de consommation au prix d'acquisition, donc TTC : il porte
+# déjà la TVA / sales tax. C'est pourquoi θ est défini HORS taxe conso (bloc D1) : la taxe
+# vit une seule fois, ici. Le pouvoir d'achat réel = revenu disponible local / PPA (en $ int.).
+# Source : OCDE DSD_PPP@DF_PPP_PPP, ANALYTICAL_CATEGORIES=A01, UNIT=XDC_USD.
+country,ppp_aic_local_per_intl_usd,currency,year
+fr,0.839,EUR,2024
+us,1.29,USD,2024
+uk,0.851,GBP,2024
+de,0.851,EUR,2024
+it,0.763,EUR,2024
+es,0.708,EUR,2024
+ch,1.35,CHF,2024
+ca,1.52,CAD,2024
+jp,89.7,JPY,2024

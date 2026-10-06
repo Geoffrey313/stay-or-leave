@@ -18,7 +18,10 @@ from itertools import groupby
 
 from src.common.paths import param_file
 from src.data.cascade import available_countries, load_cascade
+from src.data.cost_of_living import load_cost_of_living
 from src.engine.conversion import conversion
+from src.engine.purchasing_power import real_purchasing_power
+from src.engine.benchmark import stay_or_leave
 
 SMIC_ANNUAL_COST = 28000  # borne de la zone de transferts (profil et pays de référence)
 
@@ -48,7 +51,20 @@ def main() -> None:
 
     print("\nOK : par pays et profil, theta brut décroissant au-dessus du seuil ; "
           "theta élargi >= theta brut.")
-    # TODO engine : flux patrimonial Pi, benchmark statique, Bellman, matrice de flux.
+
+    # --- Premier benchmark statique : rester vs partir (pouvoir d'achat réel) ---
+    col = load_cost_of_living()
+    real = {c: real_purchasing_power(load_cascade(c), col) for c in countries}
+    print("\n=== Benchmark statique : rester (FR) vs partir, pouvoir d'achat réel ($ int.) ===")
+    print("    (profil célibataire, à position de distribution égale ; hors coût de migration)")
+    for dest in ("us", "uk"):
+        comps = [c for c in stay_or_leave(real["fr"], real[dest]) if c.profile == "celibataire"]
+        print(f"\n  France -> {dest.upper()}")
+        print(f"  {'position':>8} {'rester FR':>12} {'partir '+dest.upper():>12} {'gain partir':>12}  verdict")
+        for c in comps:
+            print(f"  {c.position:>8} {c.real_pp_origin:>12.0f} {c.real_pp_destination:>12.0f} "
+                  f"{c.leave_gain_intl_usd:>12.0f}  {'PARTIR' if c.leave_dominates else 'rester'}")
+    # TODO engine : flux patrimonial Pi (immobilier, surplus, retraite, contrepoids), Bellman, matrice.
 
 
 if __name__ == "__main__":

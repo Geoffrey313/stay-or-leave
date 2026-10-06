@@ -92,7 +92,7 @@ plafonnent. Le détail par pays est dans `data/sources.yaml` (bloc `tax_engines`
 
 | Donnée | Symbole | Granularité | Source primaire | Source secondaire / repli | Accès | Statut |
 |--------|---------|-------------|-----------------|---------------------------|-------|--------|
-| Indice du niveau des prix (base France = 100) | $\mathrm{IC}_p$ | pays, 2026 | OCDE *Comparative Price Levels* (PPA, prix conso TVA incluse) | Eurostat *Price Level Indices* | SDMX | partiel |
+| Parité de pouvoir d'achat consommation (TTC) | $\mathrm{IC}_p$ | 9 pays, 2024 | OCDE *PPP* (AIC, monnaie locale/$ int.) | Eurostat PLI | SDMX | collecté (`cost_of_living.csv`) |
 | Taxe sur la consommation (décompose IC_p, pas θ) | — | pays | OCDE *Consumption Tax Trends* (VAT Revenue Ratio) | INSEE comptes des ménages | SDMX ; web | partiel (FR posé [E]) |
 | Indice coût de la vie par ville | $\mathrm{IC}_p(q)$ | ville (540+) | Numbeo *Cost of Living* (pages web publiques : `rankings.jsp`, `/cost-of-living/in/<ville>`) | Mercer / ECA | web public gratuit (API = option payante) | manquant |
 
