@@ -196,9 +196,13 @@ par rémunération occupationnelle de queue (BLS OES / ONS ASHE, crosswalk ISCO-
 **Raffinement par niveau de diplôme (`education_premium.csv`, OCDE EaG).** role_ratio FR→US par
 niveau : licence 1,06, tertiaire 0,97, master/doctorat 0,98 ; FR→UK 0,88 / 0,79 / 0,69. Contre-intuitif :
 la France rémunère MIEUX les diplômes avancés (master/doctorat US 0,98 < 1), l'avantage US est au niveau
-licence. Même au sommet ÉDUCATIF, rester domine. Limite persistante : éducation ≠ occupation ; les rôles
-d'élite US du sommet (P90-P99,9, tech/finance) payés par métier restent à tester par la rémunération
-occupationnelle. Étape ouverte avant de clore le résultat statique.
+licence. Même au sommet ÉDUCATIF, rester domine. **Deux précisions obligatoires en note** (sinon le 0,98
+contre-intuitif se lit comme une erreur) : (1) la mesure est le gain RELATIF intra-pays (vs le
+secondaire supérieur du même pays = 100), donc nette du niveau et de la monnaie par construction —
+le nominal US plus élevé n'y entre pas ; (2) c'est une MOYENNE intra-diplôme, qui lave précisément
+le sommet US étiré (P99/médiane ≈ 7,5 vs ≈ 4,7 en France). Ainsi l'éducation-moyenne (la France
+tient) et le risque occupationnel de queue racontent la même histoire : en moyenne la France tient,
+la queue US est le seul endroit où ça bascule. Limite : éducation ≠ occupation (testée ci-dessous).
 
 **Test du sommet par OCCUPATION (`occupation_premium.csv`) : le verdict bascule pour l'élite.**
 Prime occupationnelle (groupe/moyenne nationale) : US BLS OES mai 2025 (Management 2,08, Legal 2,00,
