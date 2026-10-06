@@ -14,9 +14,13 @@ tax_engines:
   FR:        {engine: openfisca-france,  access: pip, status: installé, tail_high_income: barème_manuel}
   US:        {engine: policyengine-us,   access: pip, status: "dispo PyPI v2.29 (fédéral + Texas) ; repli NBER TAXSIM"}
   UK:        {engine: policyengine-uk,   access: pip, status: "dispo PyPI v2.122 ; repli UKMOD (licence JRC)"}
-  DE:        {engine: euromod,          access: jrc_licence, repli: "OCDE + BMF statutaire"}
-  IT:        {engine: euromod,          access: jrc_licence, repli: "OCDE + Agenzia Entrate"}
-  ES:        {engine: euromod,          access: jrc_licence, repli: "OCDE + Agencia Tributaria (Madrid)"}
+  # EUROMOD : modèle (XML, CC BY 4.0) + logiciel (EULA) + HHoT téléchargeables sur
+  # https://euromod-web.jrc.ec.europa.eu/download-euromod (inscription compte requise).
+  # PAS besoin des microdonnées EU-SILC (gated) : on simule des ménages hypothétiques.
+  # Pilotage headless par le paquet Python `euromod` (PyPI v0.4.0, via .NET).
+  DE:        {engine: euromod, driver: "pip euromod + modèle JRC", input: hypothetical, repli: "OCDE + BMF statutaire"}
+  IT:        {engine: euromod, driver: "pip euromod + modèle JRC", input: hypothetical, repli: "OCDE + Agenzia Entrate"}
+  ES:        {engine: euromod, driver: "pip euromod + modèle JRC", input: hypothetical, repli: "OCDE + Agencia Tributaria (Madrid)"}
   CH:        {engine: barème_manuel,    access: statutaire,  note: "fédéral + canton de Zoug (ESTV)"}
   CA:        {engine: barème_manuel,    access: statutaire,  note: "fédéral + Ontario (CRA) ; pas de paquet PyPI vérifié"}
   JP:        {engine: barème_manuel,    access: statutaire,  note: "NTA 2026"}
