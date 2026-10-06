@@ -20,7 +20,8 @@ from src.data.france_cascade import CascadePoint
 
 
 class ConversionPoint(BaseModel):
-    """Taux de conversion au coût employeur annuel donné (euros), hors TVA."""
+    """Taux de conversion au coût employeur annuel donné (euros), hors TVA, par profil."""
+    profile: str
     cost_employer_eur: int
     theta_brut: float      # salaire seul / coût employeur
     theta_elargi: float    # prestations incluses / coût employeur
@@ -33,6 +34,7 @@ def conversion_fr(points: List[CascadePoint]) -> List[ConversionPoint]:
         c = p.cost_employer_eur
         salaire_seul = p.revenu_disponible_year_eur - p.prestations_sociales_year_eur
         out.append(ConversionPoint(
+            profile=p.profile,
             cost_employer_eur=c,
             theta_brut=round(salaire_seul / c, 4),
             theta_elargi=round(p.revenu_disponible_year_eur / c, 4),

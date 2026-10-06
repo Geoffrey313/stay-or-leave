@@ -18,6 +18,7 @@ from src.common.paths import param_file
 
 class CascadePoint(BaseModel):
     """Composantes brutes de la cascade France au coût employeur annuel (euros)."""
+    profile: str
     cost_employer_eur: NonNegativeInt
     salaire_de_base_month_eur: NonNegativeInt
     salaire_net_year_eur: NonNegativeInt
@@ -26,8 +27,8 @@ class CascadePoint(BaseModel):
 
 
 def load_cascade_fr() -> List[CascadePoint]:
-    """Charge les composantes France, triées par coût employeur croissant."""
+    """Charge les composantes France, triées par profil puis coût employeur croissant."""
     path = param_file("fr", "theta_fr.csv")
     with path.open(newline="") as fh:
         rows = [CascadePoint(**r) for r in csv.DictReader(fh)]
-    return sorted(rows, key=lambda p: p.cost_employer_eur)
+    return sorted(rows, key=lambda p: (p.profile, p.cost_employer_eur))
