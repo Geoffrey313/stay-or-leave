@@ -1,0 +1,12 @@
+# Distribution des gains BRUTS annuels, Royaume-Uni, salariés TEMPS PLEIN.
+# Sources : ONS ASHE Table 6.7a 2025 provisoire pour P10-P90 ; ONS ASHE ad-hoc J76.7a 2024
+# pour P95/P99 (P95=92274, P99=162826), remontés à 2025 par le ratio P90 (76903/72150=1,0659)
+# pour homogénéiser l'année. Montants en GBP. P99.9 non observé -> extrapolé par Pareto en aval.
+percentile,gross_annual_local
+P10,23990
+P25,29262
+P50,39039
+P75,54009
+P90,76903
+P95,98352
+P99,173553

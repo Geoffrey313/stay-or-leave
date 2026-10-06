@@ -1,0 +1,13 @@
+# Distribution des salaires BRUTS annuels, États-Unis, individus actifs (tous horaires).
+# Source : DQYDJ d'après l'enquête Census Bureau ASEC (revenu salarial « wage and salary »),
+# année de revenu 2023. Base : TOUS les actifs (temps partiel inclus), donc le bas (P10/P25)
+# est plus bas qu'une base temps plein ; le haut (P90+) est dominé par les temps plein.
+# Montants en USD. P99.9 non observé -> extrapolé par Pareto en aval.
+percentile,gross_annual_local
+P10,20000
+P25,32000
+P50,52000
+P75,85000
+P90,132000
+P95,180000
+P99,390000

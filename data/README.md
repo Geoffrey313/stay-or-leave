@@ -48,8 +48,11 @@ montants ronds mais sur des positions de la distribution des salaires (percentil
 P50, P75, P90, P95, P99, P99,9), position comparable entre pays (comme le rang urbain pour les
 villes). Chaque percentile de salaire net est converti en coût employeur par le coin
 cotisations patronales propre au pays (pas un multiplicateur plat). Queue (P99,9) extrapolée
-par loi de Pareto ajustée sur P90/P95/P99, déclarée modélisée. France faite (INSEE 2024,
-`earnings_distribution.csv`) ; US/UK et étiquetage des six OCDE à suivre.
+par loi de Pareto ajustée sur P90/P95/P99, déclarée modélisée. Faits : France (INSEE 2024, net EQTP privé), US (DQYDJ/Census ASEC 2023, salaire brut, tous
+actifs, le bas plus bas car temps partiel inclus), UK (ONS ASHE 2025 P10-P90 temps plein +
+ad-hoc 2024 P95/P99 remontés à 2025 par le ratio P90), chacun dans
+`data/params/<pays>/earnings_distribution.csv`. Reste : étiquetage en percentiles des six OCDE
+et bas (P10/P25) par TaxBEN.
 
 **θ est défini hors TVA.** La cascade θ s'arrête au revenu disponible rapporté au coût
 employeur. La taxe sur la consommation n'entre pas ici : elle vit une seule fois dans le
