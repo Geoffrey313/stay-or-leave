@@ -1,6 +1,12 @@
-# Environnement d'ACQUISITION (hors chaîne de reproduction, hors dépôt publié).
-# Produit les paramètres transformés livrés dans data/. Séparé de requirements.txt :
-# OpenFisca-Core impose sa propre version de numpy. Installer dans .venv (ou .venv-acq).
-openfisca-france==176.1.2
-# À venir pour le bloc D1 multi-pays : policyengine-us, policyengine-uk (environnements
-# dédiés si leurs pins entrent en conflit).
+# Environnements d'ACQUISITION (hors chaîne de reproduction, hors dépôt publié).
+# Produisent les paramètres transformés livrés dans data/. Chaque moteur a SON venv :
+# leurs pins (numpy, pandas) sont mutuellement incompatibles, donc jamais le même env.
+#
+#   .venv       (France) : openfisca-france
+#   .venv-us    (US)      : policyengine-us
+#
+# Installer séparément :
+#   python -m venv .venv    && .venv/bin/pip    install openfisca-france==176.1.2
+#   python -m venv .venv-us && .venv-us/bin/pip install policyengine-us==2.29.4
+#
+# À venir : policyengine-uk (UK), EUROMOD (DE/IT/ES), barèmes codés (CH/CA/JP).

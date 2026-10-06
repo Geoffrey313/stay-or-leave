@@ -28,12 +28,10 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 .ipynb_checkpoints/
-.venv/
+.venv*/
 venv/
 .mypy_cache/
 .ruff_cache/
-.venv-acq/
-.venv-repro/
 
 # --- Artefacts de compilation LaTeX ---
 *.aux
