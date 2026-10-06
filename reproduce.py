@@ -22,6 +22,8 @@ from src.data.cost_of_living import load_cost_of_living
 from src.data.pension import load_pension, load_calibration
 from src.data.capital_tax import load_capital_tax
 from src.data.housing import load_housing
+from src.data.dynamics import load_dynamics
+from src.engine.bellman import solve as bellman_solve
 from src.engine.conversion import conversion
 from src.engine.purchasing_power import real_purchasing_power
 from src.engine.benchmark import stay_or_leave
@@ -184,6 +186,22 @@ def main() -> None:
     print("    (P90-P99,9, surreprésenté par ces métiers), PARTIR domine. Verdict OCCUPATION-DÉPENDANT :")
     print("    rester pour le diplômé moyen, partir pour les occupations d'élite. UK : groupes non")
     print("    sourçables proprement (médianes par groupe non accessibles). Friction = kappa (D8).")
+
+    # --- Modèle dynamique : Bellman, seuil de départ par âge y*(t) ---
+    dyn = load_dynamics()
+    ages, bpos, breal, thr = bellman_solve("fr", "us", col, pen, tax, house, cal, dyn)
+    print("\n=== Bellman dynamique : seuil de départ par âge, France -> US ===")
+    print(f"    (état âge×pays×position×pot funded ; r_rep={cal.r_rep_real:.1%} vs funded EC="
+          f"{cal.r_mkt_certainty_equivalent:.1%} ; kappa={dyn.kappa:.0f}, A={dyn.amenity:.0f}, lambda={dyn.lambda_return} ;")
+    print(f"     migration bloquée > {dyn.age_mig_max} ans ; phi=1 atterrissage ; équivalent-certain)")
+    print(f"  {'âge':>5}  seuil de départ (position | revenu réel $ int.)")
+    for t in range(dyn.age_start, dyn.age_mig_max + 1, 5):
+        v = thr.get(t)
+        print(f"  {t:>5}  {'rester à toute position' if v is None else f'{v[0]} | {v[1]:.0f}'}")
+    print("    Lecture : on part JEUNE (long horizon pour composer la bascule capitalisée), la")
+    print("    migration s'éteignant avec l'âge (condition de régularité). phi=1 est optimiste :")
+    print("    sous role_ratio occupationnel d'élite (>seuil) partir s'étend, sous le proxy éducation")
+    print("    (<1) il se restreint. kappa/A posés [I] ; estimation sur flux migratoires = D13.")
 
 
 if __name__ == "__main__":
