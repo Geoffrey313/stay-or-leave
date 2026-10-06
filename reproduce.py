@@ -28,7 +28,7 @@ from src.engine.benchmark import stay_or_leave
 from src.engine.pension import pension_switch
 from src.engine.surplus import surplus_switch
 from src.engine.patrimony import lifetime_patrimony, stay_or_leave_lifetime
-from src.data.wage_premium import load_wage_premium, load_education_premium
+from src.data.wage_premium import load_wage_premium, load_education_premium, load_occupation_premium
 from src.engine.wage_premium import translate_rank, break_even_role_ratio
 
 SMIC_ANNUAL_COST = 28000  # borne de la zone de transferts (profil et pays de référence)
@@ -163,6 +163,27 @@ def main() -> None:
     print("    rester domine. LIMITE : éducation != occupation ; les rôles d'élite US du sommet")
     print("    (tech/finance, P90-P99,9) exigent la rémunération occupationnelle (BLS OES / ONS ASHE).")
     print("    Friction (diplôme, langue, chômage) = kappa (D8), jamais phi.")
+
+    # Test du sommet par OCCUPATION (role_ratio = prime_occ_US / prime_occ_FR)
+    occ = load_occupation_premium()
+    star_us = next((b.role_ratio_star for b in break_even_role_ratio(pat["fr"], pat["us"])
+                    if b.profile == "celibataire" and b.position == "P90"), None)
+    print(f"\n  TEST DU SOMMET par OCCUPATION (FR->US ; seuil role_ratio* ~1,03-1,14, P90={star_us}) :")
+    print(f"  {'occupation (groupe)':>24} {'role_ratio':>11}  verdict au sommet")
+    fr_mgr, fr_prof = occ["fr"]["managers"], occ["fr"]["professionals"]
+    pairs = [("Management", "management", fr_mgr), ("Legal", "legal", fr_prof),
+             ("Computer/math", "computer_mathematical", fr_prof),
+             ("Healthcare", "healthcare_practitioners", fr_prof),
+             ("Engineering", "architecture_engineering", fr_prof),
+             ("Business/finance", "business_financial", fr_prof)]
+    for lab, key, frp in pairs:
+        rr = occ["us"][key] / frp
+        verdict = "PARTIR" if (star_us and rr >= star_us) else "borderline/rester"
+        print(f"  {lab:>24} {rr:>11.2f}  {verdict}")
+    print("    => role_ratio OCCUPATION dépasse le seuil pour les rôles d'élite : au sommet")
+    print("    (P90-P99,9, surreprésenté par ces métiers), PARTIR domine. Verdict OCCUPATION-DÉPENDANT :")
+    print("    rester pour le diplômé moyen, partir pour les occupations d'élite. UK : groupes non")
+    print("    sourçables proprement (médianes par groupe non accessibles). Friction = kappa (D8).")
 
 
 if __name__ == "__main__":

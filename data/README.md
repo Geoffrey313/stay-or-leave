@@ -200,6 +200,16 @@ licence. Même au sommet ÉDUCATIF, rester domine. Limite persistante : éducati
 d'élite US du sommet (P90-P99,9, tech/finance) payés par métier restent à tester par la rémunération
 occupationnelle. Étape ouverte avant de clore le résultat statique.
 
+**Test du sommet par OCCUPATION (`occupation_premium.csv`) : le verdict bascule pour l'élite.**
+Prime occupationnelle (groupe/moyenne nationale) : US BLS OES mai 2025 (Management 2,08, Legal 2,00,
+Computer 1,72, Healthcare 1,56, Engineering 1,53, Business/finance 1,37) vs FR ILOSTAT (managers 1,36,
+professions 1,33). role_ratio FR→US : Management 1,53, Legal 1,50, Computer 1,29, Healthcare 1,17,
+Engineering 1,15, Business/finance 1,03. Tous sauf business/finance **dépassent le seuil role_ratio***
+(~1,03-1,14) → **PARTIR** au sommet. **Résultat statique clos (nuancé, sourcé) : le verdict est
+OCCUPATION-DÉPENDANT — rester pour le diplômé/cadre moyen, partir pour les occupations d'élite** (que les
+États-Unis paient ~2× leur moyenne contre ~1,36× en France), lesquelles peuplent P90-P99,9. Limites : US
+moyenne vs FR moyenne horaire, groupes larges, coupe = borne haute (sélection), UK non sourçable par groupe.
+
 
 | Donnée | Symbole | Granularité | Source primaire | Source secondaire / repli | Accès | Statut |
 |--------|---------|-------------|-----------------|---------------------------|-------|--------|

@@ -27,6 +27,19 @@ def load_wage_premium() -> Dict[str, WagePremium]:
     return {r.destination: r for r in rows}
 
 
+def load_occupation_premium() -> Dict[str, Dict[str, float]]:
+    """Prime occupationnelle (groupe/moyenne nationale) par pays, pour le test du sommet.
+
+    Retourne {pays: {occupation: premium_over_national_avg}}. role_ratio = premium_dest/premium_origine.
+    """
+    path = param_file("occupation_premium.csv")
+    out: Dict[str, Dict[str, float]] = {}
+    with path.open(newline="") as fh:
+        for r in csv.DictReader(filter(lambda l: not l.startswith("#"), fh)):
+            out.setdefault(r["country"], {})[r["occupation"]] = float(r["premium_over_national_avg"])
+    return out
+
+
 def load_education_premium() -> Dict[str, Dict[str, float]]:
     """Gains relatifs par niveau de diplôme et pays (OCDE EaG), pour la sensibilité D7.
 
