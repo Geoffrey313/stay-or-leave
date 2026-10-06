@@ -4,9 +4,11 @@
 #
 #   .venv       (France) : openfisca-france
 #   .venv-us    (US)      : policyengine-us
+#   .venv-uk    (UK)      : policyengine-uk
 #
 # Installer séparément :
 #   python -m venv .venv    && .venv/bin/pip    install openfisca-france==176.1.2
 #   python -m venv .venv-us && .venv-us/bin/pip install policyengine-us==2.29.4
+#   python -m venv .venv-uk && .venv-uk/bin/pip install policyengine-uk==2.122.2
 #
-# À venir : policyengine-uk (UK), EUROMOD (DE/IT/ES), barèmes codés (CH/CA/JP).
+# À venir : EUROMOD (DE/IT/ES), barèmes statutaires codés (CH/CA/JP).
