@@ -28,7 +28,7 @@ from src.engine.pension import pension_switch
 from src.engine.surplus import surplus_switch
 from src.engine.patrimony import lifetime_patrimony, stay_or_leave_lifetime
 from src.data.wage_premium import load_wage_premium
-from src.engine.wage_premium import translate_rank
+from src.engine.wage_premium import translate_rank, break_even_role_ratio
 
 SMIC_ANNUAL_COST = 28000  # borne de la zone de transferts (profil et pays de référence)
 
@@ -63,6 +63,7 @@ def main() -> None:
     col = load_cost_of_living()
     real = {c: real_purchasing_power(load_cascade(c), col) for c in countries}
     print("\n=== Benchmark statique : rester (FR) vs partir, pouvoir d'achat réel ($ int.) ===")
+    print("    [HYPOTHÈSE phi=1 (même percentile) + flux annuel seul : PAS le résultat, cf. seuil D7]")
     print("    (profil célibataire, à position de distribution égale ; hors coût de migration)")
     for dest in ("us", "uk"):
         comps = [c for c in stay_or_leave(real["fr"], real[dest]) if c.profile == "celibataire"]
@@ -114,6 +115,7 @@ def main() -> None:
     pat = {c: lifetime_patrimony(load_cascade(c), col, pen, tax, cal)
            for c in countries if c in pen}
     print("\n=== Valeur patrimoniale lifetime Pi : rester (FR) vs partir ===")
+    print("    [HYPOTHÈSE phi=1 : PAS le résultat ; le résultat robuste est le seuil role_ratio* (D7)]")
     print("    (phi=1 : position de destination EGALE, prime salariale NON intégrée ; baseline")
     print("     locataire ; équivalent-certain ; M$ int. en valeur présente ; célibataire)")
     for dest in ("us", "uk"):
@@ -125,28 +127,22 @@ def main() -> None:
         for c in comps:
             print(f"  {c.position:>8} {c.pi_origin_ce/1e6:>11.2f} {c.pi_destination_ce/1e6:>11.2f} "
                   f"{c.leave_gain_ce/1e6:>12.2f}  {'PARTIR' if c.leave_dominates_ce else 'rester'}")
-    # --- D7 : translation de rang (phi), nette du niveau déjà ancré ---
-    wp = load_wage_premium()
-    print("\n=== D7 prime salariale : phi=1 (même percentile) vs translation de rang ===")
-    print("    (le niveau est DÉJÀ ancré ; role_ratio=rémunération réelle à rôle comparable, net")
-    print("     du niveau ; gain partir en équivalent-certain, M$ int. ; célibataire)")
+    # --- D7 HEADLINE : seuil de bascule role_ratio* (pas un verdict) ---
+    print("\n=== D7 : SEUIL DE BASCULE role_ratio* (headline ; pas un verdict) ===")
+    print("    Prime réelle à rôle comparable (destination/France, net du niveau DÉJÀ ancré) à")
+    print("    partir de laquelle partir domine rester. 'jamais' = la destination ne rattrape pas,")
+    print("    même à son sommet observé. Partir paie SSI la prime réelle sourcée dépasse role_ratio*.")
     for dest in ("us", "uk"):
-        if dest not in pat or dest not in wp:
+        if dest not in pat:
             continue
-        rr = wp[dest].role_ratio_ppp
-        same_pct = {c.position: c.leave_gain_ce for c in stay_or_leave_lifetime(pat["fr"], pat[dest])
-                    if c.profile == "celibataire"}
-        rank = [t for t in translate_rank(pat["fr"], pat[dest], rr) if t.profile == "celibataire"]
-        print(f"\n  France -> {dest.upper()} (role_ratio={rr:.2f})")
-        print(f"  {'position':>8} {'gain phi=1':>12} {'gain rang':>12}  lecture")
-        for t in rank:
-            g1 = same_pct.get(t.position, 0.0) / 1e6
-            g2 = t.leave_gain_ce / 1e6
-            note = "rang abaisse le gain" if g2 < g1 - 0.005 else ("rang relève" if g2 > g1 + 0.005 else "≈")
-            print(f"  {t.position:>8} {g1:>12.2f} {g2:>12.2f}  {note}")
-    print("\n    NB : role_ratio=1 (défaut) suppose une rémunération réelle comparable identique :")
-    print("    l'agent atterrit PLUS BAS dans une distribution de destination plus riche, donc le")
-    print("    gain chute vs phi=1. phi=1 était optimiste. À sourcer (rôle comparable) ; friction = kappa (D8).")
+        be = [b for b in break_even_role_ratio(pat["fr"], pat[dest]) if b.profile == "celibataire"]
+        print(f"\n  France -> {dest.upper()}")
+        print(f"  {'position':>8} {'role_ratio* (seuil)':>20}")
+        for b in be:
+            print(f"  {b.position:>8} {('jamais' if b.role_ratio_star is None else f'{b.role_ratio_star:.2f}'):>20}")
+    print("\n    role_ratio_ppp est aujourd'hui un placeholder 1,0 [I] : AUCUN verdict rester/partir")
+    print("    ne sort tant qu'il n'est pas sourcé (fourchette par profession ISCO, en PPA) et situé")
+    print("    par rapport à role_ratio*. Friction (diplôme, langue, chômage initial) = kappa (D8).")
 
 
 if __name__ == "__main__":

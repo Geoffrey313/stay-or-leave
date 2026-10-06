@@ -38,6 +38,45 @@ class RankTranslation(BaseModel):
     leave_dominates_ce: bool
 
 
+class BreakEven(BaseModel):
+    """Seuil de bascule role_ratio* : prime à rôle comparable qui égalise rester et partir.
+
+    role_ratio_star est le ratio de rémunération réelle à rôle comparable (destination/origine,
+    net du niveau) à partir duquel partir domine rester. None = la destination ne rattrape pas
+    l'origine même à son sommet observé (partir ne paie à aucune prime plausible sur la plage).
+    """
+    profile: str
+    position: str
+    origin: str
+    destination: str
+    pi_origin_ce: float
+    role_ratio_star: float | None
+
+
+def break_even_role_ratio(origin: List[Patrimony],
+                          destination: List[Patrimony]) -> List[BreakEven]:
+    """role_ratio* par (profil, position) : seuil où Pi destination (atterrissage) = Pi origine."""
+    out: List[BreakEven] = []
+    for profile in sorted({p.profile for p in origin}):
+        dest = sorted([p for p in destination if p.profile == profile],
+                      key=lambda p: p.real_pp_intl_usd)
+        if not dest:
+            continue
+        xs = np.array([p.real_pp_intl_usd for p in dest])   # revenu réel de destination
+        ys = np.array([p.pi_ce for p in dest])              # Pi correspondant (croissant)
+        for o in [p for p in origin if p.profile == profile]:
+            if o.pi_ce >= ys[-1]:
+                star = None                                  # destination ne rattrape pas, même au sommet
+            else:
+                target_real = float(np.interp(o.pi_ce, ys, xs))  # revenu réel où Pi_dest = Pi_origine
+                star = round(target_real / o.real_pp_intl_usd, 3)
+            out.append(BreakEven(
+                profile=profile, position=o.position, origin=o.country,
+                destination=dest[0].country, pi_origin_ce=o.pi_ce, role_ratio_star=star,
+            ))
+    return out
+
+
 def translate_rank(origin: List[Patrimony], destination: List[Patrimony],
                    role_ratio_ppp: float) -> List[RankTranslation]:
     """Évalue Pi de destination au percentile d'atterrissage à rôle comparable, par profil."""

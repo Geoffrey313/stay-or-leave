@@ -168,6 +168,16 @@ vrai avantage de rang. La réponse dépend entièrement de la prime à rôle com
 (Eurostat SES par profession, BLS OES, ECA/Mercer) — c'est du premier ordre, pas une sensibilité.
 Friction (diplôme, langue, chômage initial) = bloc D8 (κ), jamais dans φ.
 
+**Headline = seuil, pas verdict (`break_even_role_ratio`).** Le résultat se publie comme le seuil
+role_ratio* par position/profil : la prime réelle à rôle comparable à partir de laquelle partir
+domine. FR→US ~1,00 (P10) à 1,13 (P99,9) ; FR→UK ~1,06 à 1,14 (seuil croissant avec le revenu, UK
+moins attractif). « Partir paie SSI la prime réelle dépasse role_ratio* » ; on situe la fourchette
+sourcée par rapport au seuil, sans parier sur un scalaire. Hors coût de migration : κ (D8) relèvera
+le seuil. Aucun verdict rester/partir tant que role_ratio n'est pas sourcé ou le résultat non
+reformulé en seuil. Sourçage à venir : fourchette par profession ISCO, en PPA, avec le caveat que
+le gap d'occupation en coupe est une BORNE HAUTE du premium causal (sélection positive des partants ;
+κ et A estimés sur flux D13 en absorberont une part).
+
 
 | Donnée | Symbole | Granularité | Source primaire | Source secondaire / repli | Accès | Statut |
 |--------|---------|-------------|-----------------|---------------------------|-------|--------|
