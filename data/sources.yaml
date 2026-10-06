@@ -14,13 +14,14 @@ tax_engines:
   FR:        {engine: openfisca-france,  access: pip, status: installé, tail_high_income: barème_manuel}
   US:        {engine: policyengine-us,   access: pip, status: "dispo PyPI v2.29 (fédéral + Texas) ; repli NBER TAXSIM"}
   UK:        {engine: policyengine-uk,   access: pip, status: "dispo PyPI v2.122 ; repli UKMOD (licence JRC)"}
-  # EUROMOD : modèle (XML, CC BY 4.0) + logiciel (EULA) + HHoT téléchargeables sur
-  # https://euromod-web.jrc.ec.europa.eu/download-euromod (inscription compte requise).
-  # PAS besoin des microdonnées EU-SILC (gated) : on simule des ménages hypothétiques.
-  # Pilotage headless par le paquet Python `euromod` (PyPI v0.4.0, via .NET).
-  DE:        {engine: euromod, driver: "pip euromod + modèle JRC", input: hypothetical, repli: "OCDE + BMF statutaire"}
-  IT:        {engine: euromod, driver: "pip euromod + modèle JRC", input: hypothetical, repli: "OCDE + Agenzia Entrate"}
-  ES:        {engine: euromod, driver: "pip euromod + modèle JRC", input: hypothetical, repli: "OCDE + Agencia Tributaria (Madrid)"}
+  # DE/IT/ES : OCDE Taxing Wages (coins socio-fiscaux faisant autorité).
+  # θ = revenu net / coût du travail aux multiples du salaire moyen (67/100/133/167/250%),
+  # mappé sur nos profils ; queue haute (>250% SM) extrapolée, national seulement.
+  # EUROMOD reste CÂBLÉ et PROUVÉ headless (connecteur euromod + .NET local), en RÉSERVE :
+  # réactivable si des fichiers d'entrée HHoT correctement spécifiés sont fournis (GUI, hors de cet hôte).
+  DE:        {engine: oecd_taxing_wages, fallback_parked: euromod, note: "coin socio-fiscal par type de ménage"}
+  IT:        {engine: oecd_taxing_wages, fallback_parked: euromod, note: "coin socio-fiscal par type de ménage"}
+  ES:        {engine: oecd_taxing_wages, fallback_parked: euromod, note: "coin socio-fiscal par type de ménage"}
   CH:        {engine: barème_manuel,    access: statutaire,  note: "fédéral + canton de Zoug (ESTV)"}
   CA:        {engine: barème_manuel,    access: statutaire,  note: "fédéral + Ontario (CRA) ; pas de paquet PyPI vérifié"}
   JP:        {engine: barème_manuel,    access: statutaire,  note: "NTA 2026"}

@@ -60,7 +60,8 @@ plafonnent. Le détail par pays est dans `data/sources.yaml` (bloc `tax_engines`
 | Donnée | Symbole | Granularité | Source primaire | Source secondaire / repli | Accès | Statut |
 |--------|---------|-------------|-----------------|---------------------------|-------|--------|
 | Cotisations patronales (barème, assiettes, plafonds) | — | pays/juridiction, 2026 | OCDE *Taxing Wages* 2026 | Autorités nationales (FR : URSSAF, PLFSS 2026) ; PwC/EY *Worldwide Tax Summaries* | OCDE SDMX ; portails nationaux | partiel |
-| Cascade θ(C) livrée : **France** (OpenFisca-France), **US-Texas** et **UK** (PolicyEngine) | θ brut, θ élargi | 3 profils, par coût employeur | moteurs de microsimulation | — | `data/params/<pays>/cascade.csv` | collecté (FR, US, UK) |
+| Cascade θ(C) fine : **France** (OpenFisca-France), **US-Texas** et **UK** (PolicyEngine) | θ brut, θ élargi | 3 profils, grille 20k–400k | moteurs de microsimulation | — | `data/params/<pays>/cascade.csv` | collecté (FR, US, UK) |
+| Cascade θ(C) grossière : **DE, IT, ES** (OCDE Taxing Wages) | θ élargi faisant autorité | célibataire 3 pts (67/100/167% SM) + couple 1 pt | OCDE *Taxing Wages* (SDMX, montants LC/AV_TW) | — | `data/params/<pays>/cascade.csv` | collecté (DE, IT, ES) |
 | Cotisations salariales | — | pays, 2026 | OCDE *Taxing Wages* 2026 | idem national | SDMX | partiel |
 | Barème d'impôt sur le revenu (tranches, décote, quotient) | — | pays + État/canton, 2026 | Autorités fiscales nationales | OCDE *Tax Database* ; PwC/KPMG/EY | portails ; PDF barèmes | partiel |
 | Impôt infra-national (État/canton/région) | — | TX, Zoug, Ontario, Madrid | Administrations locales (ESTV Zoug, CRA Ontario, Agencia Madrid) | KPMG cantons suisses ; Tax Foundation (US) | portails | manquant |
