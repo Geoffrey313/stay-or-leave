@@ -1,15 +1,18 @@
 # Prime salariale phi (bloc D7) : TRANSLATION DE RANG, pas facteur de niveau.
-# L'écart de NIVEAU salarial entre pays est DÉJÀ porté par l'ancrage de chaque cascade sur
-# SA distribution (US P90 est intrinsèquement plus riche que FR P90). phi ne doit donc PAS
-# réappliquer le ratio de salaire moyen économie-entière (double-compte). phi répond à :
-# « un cadre à FR-percentile p atterrit à quel percentile de destination ? ».
-# role_ratio_ppp = rémunération RÉELLE à rôle comparable à destination / en France (en $ int.),
-# NETTE du niveau déjà ancré. =1 : même rémunération réelle comparable (l'agent atterrit au
-# percentile de destination qui a ce revenu réel, plus bas si la destination est plus riche).
-# >1 : le rôle est relativement mieux payé à destination. À sourcer sur rémunération à rôle
-# comparable (Eurostat SES par profession, BLS OES, ECA/Mercer) ; défaut 1,0 déclaré, scénarios
-# de sensibilité en attendant. La friction (reconnaissance diplôme, langue, chômage) est le bloc
-# D8 (kappa), PAS phi : phi relâche phi=1 sur l'upside, kappa portera le downside.
+# L'écart de NIVEAU est DÉJÀ porté par l'ancrage de chaque cascade sur sa distribution ;
+# phi ne réapplique PAS le ratio de salaire moyen (double-compte). role_ratio_ppp = prime à
+# rôle comparable à destination / en France, NETTE du niveau. L'agent atterrit au percentile
+# de destination correspondant. Headline = seuil role_ratio* (break_even), pas ce scalaire.
+#
+# SOURÇAGE (proxy) : prime d'éducation tertiaire relative (OCDE Education at a Glance,
+# EARN_RELATIVE, diplômés supérieur ISCED 5-8 vs secondaire sup.=100, 25-64 ans, sexes
+# confondus) ; role_ratio = prime_destination / prime_FR. FR 179,8 (2022), US 174,4, UK 141,8
+# (2024). => FR->US 0,97 ; FR->UK 0,79. Tous deux sous role_ratio* => rester domine (proxy, pré-kappa).
+# CAVEATS déclarés : (1) proxy ÉDUCATION (tertiaire moyen), pas la profession ; il SOUS-ESTIME
+# le premium des rôles d'élite US au sommet (queue haute plus grasse), là où vivent P90-P99,9 ;
+# (2) coupe transversale = BORNE HAUTE du premium causal d'un partant (sélection positive) ;
+# (3) friction (diplôme, langue, chômage) = bloc D8 (kappa), jamais phi. À raffiner au sommet
+# par rémunération occupationnelle de queue (BLS OES / ONS ASHE, crosswalk ISCO-SOC).
 destination,role_ratio_ppp,status,source
-us,1.0,[I],"défaut neutre ; à sourcer rémunération cadre comparable US/FR nette du niveau"
-uk,1.0,[I],"défaut neutre ; à sourcer rémunération cadre comparable UK/FR nette du niveau"
+us,0.970,[E],"OCDE EaG EARN_RELATIVE tertiaire 5-8 vs sec.sup, 25-64 ; US174,4/FR179,8 ; proxy éducation"
+uk,0.789,[E],"OCDE EaG EARN_RELATIVE tertiaire 5-8 vs sec.sup, 25-64 ; UK141,8/FR179,8 ; proxy éducation"

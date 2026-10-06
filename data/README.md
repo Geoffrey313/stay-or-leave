@@ -172,11 +172,17 @@ Friction (diplôme, langue, chômage initial) = bloc D8 (κ), jamais dans φ.
 role_ratio* par position/profil : la prime réelle à rôle comparable à partir de laquelle partir
 domine. FR→US ~1,00 (P10) à 1,13 (P99,9) ; FR→UK ~1,06 à 1,14 (seuil croissant avec le revenu, UK
 moins attractif). « Partir paie SSI la prime réelle dépasse role_ratio* » ; on situe la fourchette
-sourcée par rapport au seuil, sans parier sur un scalaire. Hors coût de migration : κ (D8) relèvera
-le seuil. Aucun verdict rester/partir tant que role_ratio n'est pas sourcé ou le résultat non
-reformulé en seuil. Sourçage à venir : fourchette par profession ISCO, en PPA, avec le caveat que
-le gap d'occupation en coupe est une BORNE HAUTE du premium causal (sélection positive des partants ;
-κ et A estimés sur flux D13 en absorberont une part).
+sourcée par rapport au seuil, sans parier sur un scalaire. Hors coût de migration : κ (D8) relèvera le seuil.
+
+**role_ratio SOURCÉ (proxy éducation) et verdict.** Prime d'éducation tertiaire relative (OCDE
+Education at a Glance, EARN_RELATIVE, diplômés du supérieur vs secondaire sup.=100, 25-64 ans) :
+FR 179,8, US 174,4, UK 141,8 → role_ratio FR→US 0,97, FR→UK 0,79, nets du niveau. Les deux sont
+SOUS role_ratio* à toutes les positions : **rester domine** (la prime de compétence française est
+≥ celle des US/UK ; le cadre n'améliore pas son rang en partant ; la capitalisation ne compense pas,
+avant κ). Cela RENVERSE l'histoire naïve φ=1. Caveats déclarés : proxy ÉDUCATION moyen (pas la
+profession), qui SOUS-ESTIME le premium des rôles d'élite US au sommet (P90-P99,9) ; coupe
+transversale = borne haute du premium causal (sélection) ; friction = κ (D8). À raffiner au sommet
+par rémunération occupationnelle de queue (BLS OES / ONS ASHE, crosswalk ISCO-SOC).
 
 
 | Donnée | Symbole | Granularité | Source primaire | Source secondaire / repli | Accès | Statut |

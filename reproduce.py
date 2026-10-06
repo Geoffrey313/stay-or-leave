@@ -127,22 +127,30 @@ def main() -> None:
         for c in comps:
             print(f"  {c.position:>8} {c.pi_origin_ce/1e6:>11.2f} {c.pi_destination_ce/1e6:>11.2f} "
                   f"{c.leave_gain_ce/1e6:>12.2f}  {'PARTIR' if c.leave_dominates_ce else 'rester'}")
-    # --- D7 HEADLINE : seuil de bascule role_ratio* (pas un verdict) ---
-    print("\n=== D7 : SEUIL DE BASCULE role_ratio* (headline ; pas un verdict) ===")
-    print("    Prime réelle à rôle comparable (destination/France, net du niveau DÉJÀ ancré) à")
-    print("    partir de laquelle partir domine rester. 'jamais' = la destination ne rattrape pas,")
-    print("    même à son sommet observé. Partir paie SSI la prime réelle sourcée dépasse role_ratio*.")
+    # --- D7 HEADLINE : seuil role_ratio* situé contre la prime sourcée (proxy) ---
+    wp = load_wage_premium()
+    print("\n=== D7 : SEUIL role_ratio* vs prime à rôle comparable SOURCÉE (proxy éducation) ===")
+    print("    role_ratio* = prime réelle (dest/FR, net du niveau) à partir de laquelle partir domine.")
+    print("    role_ratio sourcé = prime d'éducation tertiaire OCDE (proxy ; sous-estime les rôles")
+    print("    d'élite US au sommet). Verdict : PARTIR si sourcé >= seuil. 'jamais' = dest ne rattrape pas.")
     for dest in ("us", "uk"):
         if dest not in pat:
             continue
         be = [b for b in break_even_role_ratio(pat["fr"], pat[dest]) if b.profile == "celibataire"]
-        print(f"\n  France -> {dest.upper()}")
-        print(f"  {'position':>8} {'role_ratio* (seuil)':>20}")
+        rr = wp[dest].role_ratio_ppp if dest in wp else None
+        print(f"\n  France -> {dest.upper()}   (role_ratio sourcé = {rr:.2f})")
+        print(f"  {'position':>8} {'role_ratio* seuil':>18} {'sourcé':>8}  verdict (proxy, pré-κ)")
         for b in be:
-            print(f"  {b.position:>8} {('jamais' if b.role_ratio_star is None else f'{b.role_ratio_star:.2f}'):>20}")
-    print("\n    role_ratio_ppp est aujourd'hui un placeholder 1,0 [I] : AUCUN verdict rester/partir")
-    print("    ne sort tant qu'il n'est pas sourcé (fourchette par profession ISCO, en PPA) et situé")
-    print("    par rapport à role_ratio*. Friction (diplôme, langue, chômage initial) = kappa (D8).")
+            star = b.role_ratio_star
+            if star is None:
+                verdict, s = "rester (jamais)", "jamais"
+            else:
+                verdict, s = ("PARTIR" if rr >= star else "rester"), f"{star:.2f}"
+            print(f"  {b.position:>8} {s:>18} {rr:>8.2f}  {verdict}")
+    print("\n    SOURCÉ (proxy éducation) : FR->US 0,97, FR->UK 0,79, tous deux SOUS le seuil =>")
+    print("    rester domine (la prime de compétence FR >= US/UK). CAVEAT : proxy moyen tertiaire,")
+    print("    sous-estime le premium des rôles d'élite US au sommet ; à raffiner par rémunération")
+    print("    occupationnelle de queue (BLS OES / ONS ASHE). Friction = kappa (D8), jamais phi.")
 
 
 if __name__ == "__main__":
