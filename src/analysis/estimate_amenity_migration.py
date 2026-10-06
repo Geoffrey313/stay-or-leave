@@ -57,7 +57,7 @@ def estimate(a_grid=None, kappa_grid=None) -> dict:
         for kap in kappa_grid:
             d = dyn.model_copy(update={"amenity": float(A), "kappa": float(kap)})
             res = solve("fr", "us", col, pen, tax, house, cal, d)
-            sim = simulate_moments(res, dyn.age_mig_max)
+            sim = simulate_moments(res)
             dist = _distance(sim, obs)
             surface.append((A, kap, dist, sim["peak_departure_age"], sim["emigrant_share"], sim["return_rate"]))
             if best is None or dist < best[2]:

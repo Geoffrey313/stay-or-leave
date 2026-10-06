@@ -202,7 +202,9 @@ def main() -> None:
     print("    Lecture : on part JEUNE (long horizon pour composer la bascule capitalisée), la")
     print("    migration s'éteignant avec l'âge (condition de régularité). phi=1 est optimiste :")
     print("    sous role_ratio occupationnel d'élite (>seuil) partir s'étend, sous le proxy éducation")
-    print("    (<1) il se restreint. kappa/A posés [I] ; estimation sur flux migratoires = D13.")
+    print("    (<1) il se restreint. Estimation SMM sur flux (D13, solveur 2 accumulateurs corrigé,")
+    print("    module src.analysis.estimate_amenity_migration) : A*~15k, kappa*~10k ; stock net à")
+    print("    l'étranger ~3,7% (vs 6% obs) ; taux de retour sur-prédit (~0,96 vs 0,5), à raffiner.")
 
 
 if __name__ == "__main__":

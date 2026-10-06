@@ -39,21 +39,26 @@ def _crra(c: np.ndarray, gamma: float) -> np.ndarray:
 
 
 def _country_flows(country: str, col, pension, tax, housing, cal):
-    """Par position : (consommation réelle nette de loyer, épargne annuelle) en $ int."""
+    """Par position : consommation, épargne FUNDED (surplus + cotisation si capitalisation),
+    cotisation PAYG (si répartition), revenu réel. En $ int. Le routage de la cotisation retraite
+    dépend du régime du pays (capitalisation -> funded r_mkt ; répartition -> droit PAYG r_rep)."""
     pts = [p for p in load_cascade(country) if p.profile == "celibataire"]
     pts.sort(key=lambda p: p.cost_employer)
     ppp = col[country].ppp_aic_local_per_intl_usd
     sat = cal.consumption_saturation_intl_usd
     rent = (housing[country].rent_monthly_local * 12 / ppp) if country in housing else 0.0
-    cons, save, positions, real = [], [], [], []
+    funded = pension[country].regime == "funded"
+    cons, save_f, save_p, positions, real = [], [], [], [], []
     for p in pts:
         real_pp = p.disposable_year / ppp
         after = max(0.0, real_pp - rent)
-        c = min(after, sat)
         surplus = max(0.0, after - sat)
         contrib = pension[country].contrib_share_cost * p.cost_employer / ppp
-        cons.append(c); save.append(surplus + contrib); positions.append(p.position); real.append(real_pp)
-    return positions, np.array(cons), np.array(save), np.array(real)
+        cons.append(min(after, sat))
+        save_f.append(surplus + (contrib if funded else 0.0))   # -> pot funded (r_mkt)
+        save_p.append(0.0 if funded else contrib)               # -> droit répartition (r_rep)
+        positions.append(p.position); real.append(real_pp)
+    return positions, np.array(cons), np.array(save_f), np.array(save_p), np.array(real)
 
 
 def _position_transition(n: int, p_move: float = 0.4) -> np.ndarray:
@@ -68,63 +73,74 @@ def _position_transition(n: int, p_move: float = 0.4) -> np.ndarray:
     return P
 
 
+def _interp2(V2d, wf_g, wp_g, wf_new, wp_new):
+    """Interpolation bilinéaire séparable de V2d(Wf,Wp) aux nouveaux noeuds (wf_new x wp_new)."""
+    tmp = np.empty((len(wf_g), len(wp_g)))
+    for j in range(len(wp_g)):
+        tmp[:, j] = np.interp(wf_new, wf_g, V2d[:, j])     # le long de Wf
+    out = np.empty_like(tmp)
+    for i in range(len(wf_g)):
+        out[i, :] = np.interp(wp_new, wp_g, tmp[i, :])     # le long de Wp
+    return out
+
+
 def solve(origin: str, destination: str, col: Dict[str, CostOfLiving],
           pension: Dict[str, PensionParams], tax: Dict[str, CapitalTax],
           housing: Dict[str, Housing], cal: Calibration, dyn: Dynamics,
-          nW: int = 25, Wmax: float = 6_000_000.0):
-    """Résout la Bellman et renvoie, par âge, le seuil de départ (position/revenu réel)."""
-    beta = 1.0 / (1.0 + cal.discount_rate_rho)
-    r_eff = {c: (cal.r_mkt_certainty_equivalent if pension[c].regime == "funded" else cal.r_rep_real)
-             for c in (origin, destination)}
-    pos_o, cons_o, save_o, real_o = _country_flows(origin, col, pension, tax, housing, cal)
-    pos_d, cons_d, save_d, real_d = _country_flows(destination, col, pension, tax, housing, cal)
-    npos = len(pos_o)
-    flows = {origin: (cons_o, save_o), destination: (cons_d, save_d)}
-    Ptrans = _position_transition(npos)
+          nf: int = 12, npp: int = 8, Wf_max: float = 6_000_000.0, Wp_max: float = 2_000_000.0):
+    """Résout la Bellman à deux accumulateurs (funded W_f, droit répartition W_p).
 
-    # Atterrissage EN RANG (percentile), pas par revenu réel : apparier les revenus réels
-    # ré-injecterait le NIVEAU (la destination plus riche ferait "gagner" même en bas), le
-    # double-compte interdit. Premier passage : phi=1, atterrissage au MÊME indice de percentile
-    # (la valeur de destination à ce percentile porte déjà son niveau). L'effet de role_ratio
-    # (translation de rang nette du niveau) est traité dans la couche statique D7 (seuil vs
-    # sourcé), à injecter ici en décalage d'indice dans un raffinement ultérieur.
-    identity = np.arange(npos)
-    landing = {origin: identity, destination: identity}
-    Wg = np.linspace(0.0, Wmax, nW)
+    Correctness : le patrimoine EXISTANT ne bascule pas de régime avec la résidence. W_f (actifs)
+    croît à r_mkt équivalent-certain NET de l'impôt sur les plus-values de la RÉSIDENCE ; W_p
+    (droit répartition, vesté) croît à r_rep PARTOUT. La résidence ne change que le flux, la
+    fiscalité du capital sur W_f, et le ROUTAGE des nouvelles cotisations retraite (répartition
+    -> W_p ; capitalisation -> W_f). Atterrissage en rang (phi=1, même percentile). Rente
+    terminale forfaitaire (4%) sur W_f + W_p.
+    """
+    beta = 1.0 / (1.0 + cal.discount_rate_rho)
+    rce = cal.r_mkt_certainty_equivalent
+    r_f = {c: rce * (1 - tax[c].capgains_tax_rate) for c in (origin, destination)}  # funded net impôt résidence
+    r_p = cal.r_rep_real                                                            # droit répartition, partout
+    pos_o, cons_o, sf_o, sp_o, real_o = _country_flows(origin, col, pension, tax, housing, cal)
+    pos_d, cons_d, sf_d, sp_d, real_d = _country_flows(destination, col, pension, tax, housing, cal)
+    npos = len(pos_o)
+    flows = {origin: (cons_o, sf_o, sp_o), destination: (cons_d, sf_d, sp_d)}
+    Ptrans = _position_transition(npos)
+    Wf_g = np.linspace(0.0, Wf_max, nf)
+    Wp_g = np.linspace(0.0, Wp_max, npp)
     ages = list(range(dyn.age_start, dyn.age_retire + 1))
     countries = [origin, destination]
 
-    def interpW(Vrow, Wq):
-        return np.interp(Wq, Wg, Vrow)
+    # valeur terminale : CRRA d'une rente forfaitaire 4% sur le patrimoine total (W_f + W_p)
+    WF, WP = np.meshgrid(Wf_g, Wp_g, indexing="ij")
+    Vterm = _crra(0.04 * (WF + WP) + 1e-3, cal.risk_aversion)
+    V = {c: [Vterm.copy() for _ in range(npos)] for c in countries}
 
-    # valeur terminale : rente de retraite forfaitaire (4%) sur W, CRRA
-    V = {c: np.zeros((npos, nW)) for c in countries}
-    for c in countries:
-        for ip in range(npos):
-            V[c][ip] = _crra(0.04 * Wg + 1e-3, cal.risk_aversion)
-
-    policy_leave, policy_return = {}, {}  # (age) -> (npos,nW) bool : partir / rentrer optimal
+    policy_leave, policy_return = {}, {}
     for t in reversed(ages[:-1]):
-        Vn = {c: np.zeros((npos, nW)) for c in countries}
-        leave_grid = np.zeros((npos, nW), dtype=bool)              # partir optimal (origine -> dest)
-        return_grid = np.zeros((npos, nW), dtype=bool)             # rentrer optimal (dest -> origine)
+        Vn = {c: [None] * npos for c in countries}
+        leave_grid = np.zeros((npos, nf, npp), dtype=bool)
+        return_grid = np.zeros((npos, nf, npp), dtype=bool)
         for c in countries:
-            cons_c, save_c = flows[c]
-            A_here = dyn.amenity if c == origin else 0.0            # aménité = équivalent-conso en France
+            cons_c, sf_c, sp_c = flows[c]
+            A_here = dyn.amenity if c == origin else 0.0
             for ip in range(npos):
-                Wnext = Wg * (1 + r_eff[c]) + save_c[ip]            # accumulation du pot (sur la grille)
-                EV_stay = sum(Ptrans[ip, jp] * interpW(V[c][jp], Wnext) for jp in range(npos))
-                stay_val = _crra(cons_c[ip] + A_here, cal.risk_aversion) + beta * EV_stay  # array sur W
+                wf_n = Wf_g * (1 + r_f[c]) + sf_c[ip]            # accumulation funded (sur grille)
+                wp_n = Wp_g * (1 + r_p) + sp_c[ip]               # accumulation droit répartition
+                EV_stay = sum(Ptrans[ip, jp] * _interp2(V[c][jp], Wf_g, Wp_g, wf_n, wp_n)
+                              for jp in range(npos))
+                stay_val = _crra(cons_c[ip] + A_here, cal.risk_aversion) + beta * EV_stay
                 best = stay_val
-                if t <= dyn.age_mig_max:                            # option de migration
+                if t <= dyn.age_mig_max:
                     other = destination if c == origin else origin
                     cost = dyn.kappa if c == origin else dyn.lambda_return * dyn.kappa
-                    cons_m, save_m = flows[other]
+                    cons_m, sf_m, sp_m = flows[other]
                     A_other = dyn.amenity if other == origin else 0.0
-                    jp0 = int(landing[c][ip])                       # position d'atterrissage (rôle comparable)
-                    Wm = np.maximum(Wg - cost, 0.0) * (1 + r_eff[other]) + save_m[jp0]
-                    EV_move = sum(Ptrans[jp0, jp] * interpW(V[other][jp], Wm) for jp in range(npos))
-                    move_val = _crra(cons_m[jp0] + A_other, cal.risk_aversion) + beta * EV_move
+                    wf_m = np.maximum(Wf_g - cost, 0.0) * (1 + r_f[other]) + sf_m[ip]  # κ payé sur W_f
+                    wp_m = Wp_g * (1 + r_p) + sp_m[ip]                                 # W_p vesté, inchangé
+                    EV_move = sum(Ptrans[ip, jp] * _interp2(V[other][jp], Wf_g, Wp_g, wf_m, wp_m)
+                                  for jp in range(npos))
+                    move_val = _crra(cons_m[ip] + A_other, cal.risk_aversion) + beta * EV_move
                     best = np.maximum(stay_val, move_val)
                     if c == origin:
                         leave_grid[ip] = move_val > stay_val
@@ -135,31 +151,38 @@ def solve(origin: str, destination: str, col: Dict[str, CostOfLiving],
         policy_leave[t] = leave_grid
         policy_return[t] = return_grid
 
-    # W représentatif par âge : pot accumulé le long de la position médiane en restant en origine
+    # (W_f, W_p) représentatifs par âge : accumulés le long de la position médiane en restant
     mid = npos // 2
-    Wpath, w = {}, 0.0
+    Wpath, wf, wp = {}, 0.0, 0.0
     for t in ages:
-        Wpath[t] = w
-        w = w * (1 + r_eff[origin]) + save_o[mid]
-    # seuils par âge au W représentatif : départ = plus basse position où partir est optimal ;
-    # retour = plus haute position où rentrer est optimal (rentrer quand le revenu s'effondre).
+        Wpath[t] = (wf, wp)
+        wf = wf * (1 + r_f[origin]) + sf_o[mid]
+        wp = wp * (1 + r_p) + sp_o[mid]
     threshold, leave_idx, return_idx = {}, {}, {}
     for t in ages[:-1]:
-        iw = int(np.argmin(np.abs(Wg - Wpath[t])))
-        lrow = policy_leave[t][:, iw]
-        rrow = policy_return[t][:, iw]
-        li = next((i for i, v in enumerate(lrow) if v), None)
-        ri = next((i for i in range(npos - 1, -1, -1) if rrow[i]), None)
+        iwf = int(np.argmin(np.abs(Wf_g - Wpath[t][0])))
+        iwp = int(np.argmin(np.abs(Wp_g - Wpath[t][1])))
+        lcol = policy_leave[t][:, iwf, iwp]
+        rcol = policy_return[t][:, iwf, iwp]
+        li = next((i for i, v in enumerate(lcol) if v), None)
+        ri = next((i for i in range(npos - 1, -1, -1) if rcol[i]), None)
         threshold[t] = (pos_o[li], real_o[li]) if li is not None else None
         leave_idx[t], return_idx[t] = li, ri
     return BellmanResult(ages=ages, positions=pos_o, real=real_o, threshold=threshold,
-                         leave_idx=leave_idx, return_idx=return_idx, transition=Ptrans)
+                         leave_idx=leave_idx, return_idx=return_idx, transition=Ptrans,
+                         policy_leave=policy_leave, policy_return=policy_return,
+                         Wf_g=Wf_g, Wp_g=Wp_g, r_f=r_f, r_p=r_p, flows=flows,
+                         origin=origin, destination=destination, age_mig_max=dyn.age_mig_max,
+                         kappa=dyn.kappa, lambda_kappa=dyn.lambda_return * dyn.kappa)
 
 
 class BellmanResult:
     """Sortie du solveur : seuils de départ/retour par âge et transition de position."""
 
-    def __init__(self, ages, positions, real, threshold, leave_idx, return_idx, transition):
+    def __init__(self, ages, positions, real, threshold, leave_idx, return_idx, transition,
+                 policy_leave=None, policy_return=None, Wf_g=None, Wp_g=None, r_f=None, r_p=None,
+                 flows=None, origin=None, destination=None, age_mig_max=None,
+                 kappa=None, lambda_kappa=None):
         self.ages = ages
         self.positions = positions
         self.real = real
@@ -167,3 +190,12 @@ class BellmanResult:
         self.leave_idx = leave_idx          # age -> plus basse position-index où partir (ou None)
         self.return_idx = return_idx        # age -> plus haute position-index où rentrer (ou None)
         self.transition = transition        # matrice de transition de position
+        # Pour la simulation de cohorte sur la distribution jointe (position, W_f, W_p) :
+        self.policy_leave = policy_leave    # age -> (npos, nf, npp) bool
+        self.policy_return = policy_return
+        self.Wf_g, self.Wp_g = Wf_g, Wp_g
+        self.r_f, self.r_p = r_f, r_p       # rendements funded (par pays) et répartition
+        self.flows = flows                  # pays -> (cons, save_funded, save_payg) par position
+        self.origin, self.destination = origin, destination
+        self.age_mig_max = age_mig_max
+        self.kappa, self.lambda_kappa = kappa, lambda_kappa
