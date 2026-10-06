@@ -43,6 +43,12 @@ reçoit sa référence datée dans ce ledger.
 
 ### D1 — Cascade socio-fiscale θ(C) : coût employeur → pouvoir d'achat
 
+**θ est défini hors TVA.** La cascade θ s'arrête au revenu disponible rapporté au coût
+employeur. La taxe sur la consommation n'entre pas ici : elle vit une seule fois dans le
+bloc D3 (indice IC_p), dont les niveaux de prix comparatifs sont déjà TVA incluse. La
+mettre aussi dans θ la compterait deux fois. Deux objets : θ brut (salaire seul) et θ
+élargi (prestations incluses).
+
 **Stratégie (validée) : hybride.** Microsimulation où elle existe (OpenFisca-France,
 OpenFisca-US / TAXSIM pour le fédéral + Texas, PolicyEngine-UK), moteur EUROMOD pour
 DE/IT/ES (accès licence JRC sur inscription ; repli OCDE + barèmes nationaux le temps
@@ -73,7 +79,8 @@ plafonnent. Le détail par pays est dans `data/sources.yaml` (bloc `tax_engines`
 
 | Donnée | Symbole | Granularité | Source primaire | Source secondaire / repli | Accès | Statut |
 |--------|---------|-------------|-----------------|---------------------------|-------|--------|
-| Indice du niveau des prix (base France = 100) | $\mathrm{IC}_p$ | pays, 2026 | OCDE *Comparative Price Levels* (PPA) | Eurostat *Price Level Indices* | SDMX | partiel |
+| Indice du niveau des prix (base France = 100) | $\mathrm{IC}_p$ | pays, 2026 | OCDE *Comparative Price Levels* (PPA, prix conso TVA incluse) | Eurostat *Price Level Indices* | SDMX | partiel |
+| Taxe sur la consommation (décompose IC_p, pas θ) | — | pays | OCDE *Consumption Tax Trends* (VAT Revenue Ratio) | INSEE comptes des ménages | SDMX ; web | partiel (FR posé [E]) |
 | Indice coût de la vie par ville | $\mathrm{IC}_p(q)$ | ville (540+) | Numbeo *Cost of Living* (pages web publiques : `rankings.jsp`, `/cost-of-living/in/<ville>`) | Mercer / ECA | web public gratuit (API = option payante) | manquant |
 
 ### D4 — Immobilier comme flux capitalisable
