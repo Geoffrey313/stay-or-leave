@@ -131,6 +131,14 @@ cotisation figée = canal rendement isolé (le taux de cotisation par pays est u
 
 ### D6 — Fiscalité du capital
 
+**Brique posée (`capital_tax.csv`, `src/engine/surplus.py`).** Le surplus réel au-dessus d'un
+seuil de saturation de la consommation est investi au rendement net = r_mkt·(1−τ), τ = impôt
+sur les plus-values (FR 31,4 % et CH 0 % fermes ; autres standards flaggés). Même traitement du
+risque que D5 : brut avant prime de risque + EC illustratif, variance portée vers Π. Surplus nul
+sous saturation (~P75), puis divergence rapide au sommet. D5 (retraite capitalisée) + D6 (surplus
+capitalisé) = l'avantage patrimonial complet de la capitalisation.
+
+
 | Donnée | Symbole | Granularité | Source primaire | Source secondaire / repli | Accès | Statut |
 |--------|---------|-------------|-----------------|---------------------------|-------|--------|
 | Impôt sur les plus-values mobilières | $\tau_k$ | pays, 2026 | OCDE *Tax Database* | PwC/KPMG/EY *Worldwide Tax Summaries* 2026 | SDMX ; web | partiel |

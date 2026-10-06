@@ -12,3 +12,5 @@ r_mkt_real,0.045,[I],"espérance réelle moyenne pondérée glide path 85->30, a
 sigma_mkt_real,0.12,[I],"volatilité réelle du rendement, cohérente glide path (actions ~0,18, obligations plus bas)"
 risk_aversion,2.0,[I],"CRRA gamma, valeur standard littérature cycle de vie"
 career_years,40,[I],"entrée en activité ~25 ans à retraite ~65 ans"
+consumption_saturation_intl_usd,55000,[I],"cadre : surplus d'épargne nul sous saturation du panier (~100k de coût employeur)"
+

@@ -1,0 +1,15 @@
+# Fiscalité du capital (bloc D6) : taux d'imposition des plus-values mobilières, 2024-2026.
+# Statut par valeur : [S] sourcé ferme, [E] estimé/standard à vérifier.
+# Sert à capitaliser le surplus d'épargne libre net de fiscalité : r_net = r_mkt*(1 - tau).
+# Le rendement reste RISQUÉ (cf. D5) : la variance est portée vers Pi, l'ajustement de risque
+# est fait une fois dans la Bellman. Source : OCDE Tax Database ; PwC/KPMG ; FR/CH audit interne.
+country,capgains_tax_rate,status,source
+fr,0.314,[S],"PFU 30% + part CEHR (audit interne)"
+us,0.238,[S],"20% long terme + 3,8% NIIT"
+uk,0.20,[E],"CGT actions (taux haut ~20%, 24% post-10/2024 : à figer)"
+de,0.264,[E],"Abgeltungsteuer 25% + soli 5,5%"
+ch,0.0,[S],"pas d'impôt sur plus-values mobilières privées (impôt fortune séparé)"
+ca,0.27,[E],"inclusion 50% x taux marginal haut Ontario (~27%, réforme 2024 à vérifier)"
+it,0.26,[E],"imposta sostitutiva 26%"
+es,0.28,[E],"revenus de l'épargne, tranche haute ~28%"
+jp,0.20,[E],"20,315% (15% national + 5% local + surtaxe)"

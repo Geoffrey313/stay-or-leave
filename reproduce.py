@@ -20,10 +20,12 @@ from src.common.paths import param_file
 from src.data.cascade import available_countries, load_cascade
 from src.data.cost_of_living import load_cost_of_living
 from src.data.pension import load_pension, load_calibration
+from src.data.capital_tax import load_capital_tax
 from src.engine.conversion import conversion
 from src.engine.purchasing_power import real_purchasing_power
 from src.engine.benchmark import stay_or_leave
 from src.engine.pension import pension_switch
+from src.engine.surplus import surplus_switch
 
 SMIC_ANNUAL_COST = 28000  # borne de la zone de transferts (profil et pays de référence)
 
@@ -88,7 +90,24 @@ def main() -> None:
                 print(f"  {s.position:>8} {s.annual_contribution:>12.0f} "
                       f"{s.switch_gain_gross_pre_risk / fr_ppp / 1000:>18.0f} "
                       f"{s.switch_gain_ce_illustrative / fr_ppp / 1000:>16.0f}")
-    # TODO engine : surplus investi net fiscalité (D6), immobilier (D4), contrepoids ; puis Bellman.
+    # --- Surplus d'épargne libre capitalisé net de fiscalité du capital (D6) ---
+    tax = load_capital_tax()
+    print("\n=== Surplus investi : patrimoine terminal gagné en quittant la France ===")
+    print(f"    (au-dessus de {cal.consumption_saturation_intl_usd:.0f} $int. de saturation ; "
+          f"net plus-values FR {tax['fr'].capgains_tax_rate:.1%} ; célibataire ; k$ int.)")
+    print("    brut = avant risque (entre dans Pi avec sigma) ; EC = équivalent-certain illustratif")
+    for dest in ("us", "uk"):
+        if dest not in tax:
+            continue
+        sw = [s for s in surplus_switch(real["fr"], real[dest], tax, cal) if s.profile == "celibataire"]
+        print(f"\n  France -> {dest.upper()} (plus-values {tax['fr'].capgains_tax_rate:.1%} -> "
+              f"{tax[dest].capgains_tax_rate:.1%})")
+        print(f"  {'position':>8} {'surplus FR':>11} {'surplus '+dest.upper():>11} "
+              f"{'gain brut':>11} {'gain EC':>9}")
+        for s in sw:
+            print(f"  {s.position:>8} {s.surplus_origin:>11.0f} {s.surplus_destination:>11.0f} "
+                  f"{s.wealth_gain_gross_pre_risk/1000:>11.0f} {s.wealth_gain_ce_illustrative/1000:>9.0f}")
+    # TODO engine : immobilier (D4), contrepoids socialisés ; puis Pi unique et Bellman.
 
 
 if __name__ == "__main__":
