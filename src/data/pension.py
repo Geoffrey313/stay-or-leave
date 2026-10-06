@@ -33,6 +33,7 @@ class Calibration(BaseModel):
     risk_aversion: float
     career_years: int
     consumption_saturation_intl_usd: float
+    discount_rate_rho: float
 
     @property
     def r_mkt_certainty_equivalent(self) -> float:
@@ -58,4 +59,5 @@ def load_calibration() -> Calibration:
                        sigma_mkt_real=float(d["sigma_mkt_real"]),
                        risk_aversion=float(d["risk_aversion"]),
                        career_years=int(float(d["career_years"])),
-                       consumption_saturation_intl_usd=float(d["consumption_saturation_intl_usd"]))
+                       consumption_saturation_intl_usd=float(d["consumption_saturation_intl_usd"]),
+                       discount_rate_rho=float(d["discount_rate_rho"]))

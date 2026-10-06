@@ -26,6 +26,7 @@ from src.engine.purchasing_power import real_purchasing_power
 from src.engine.benchmark import stay_or_leave
 from src.engine.pension import pension_switch
 from src.engine.surplus import surplus_switch
+from src.engine.patrimony import lifetime_patrimony, stay_or_leave_lifetime
 
 SMIC_ANNUAL_COST = 28000  # borne de la zone de transferts (profil et pays de référence)
 
@@ -107,7 +108,24 @@ def main() -> None:
         for s in sw:
             print(f"  {s.position:>8} {s.surplus_origin:>11.0f} {s.surplus_destination:>11.0f} "
                   f"{s.wealth_gain_gross_pre_risk/1000:>11.0f} {s.wealth_gain_ce_illustrative/1000:>9.0f}")
-    # TODO engine : immobilier (D4), contrepoids socialisés ; puis Pi unique et Bellman.
+    # --- Pi unique : valeur patrimoniale lifetime, rester vs partir (phi=1, baseline locataire) ---
+    pat = {c: lifetime_patrimony(load_cascade(c), col, pen, tax, cal)
+           for c in countries if c in pen}
+    print("\n=== Valeur patrimoniale lifetime Pi : rester (FR) vs partir ===")
+    print("    (phi=1 : position de destination EGALE, prime salariale NON intégrée ; baseline")
+    print("     locataire ; équivalent-certain ; M$ int. en valeur présente ; célibataire)")
+    for dest in ("us", "uk"):
+        if dest not in pat:
+            continue
+        comps = [c for c in stay_or_leave_lifetime(pat["fr"], pat[dest]) if c.profile == "celibataire"]
+        print(f"\n  France -> {dest.upper()}")
+        print(f"  {'position':>8} {'Pi rester':>11} {'Pi partir':>11} {'gain partir':>12}  verdict")
+        for c in comps:
+            print(f"  {c.position:>8} {c.pi_origin_ce/1e6:>11.2f} {c.pi_destination_ce/1e6:>11.2f} "
+                  f"{c.leave_gain_ce/1e6:>12.2f}  {'PARTIR' if c.leave_dominates_ce else 'rester'}")
+    print("\n    NB : Pi à phi=1 n'est pas la réponse finale rester/partir ; D7 (prime salariale)")
+    print("    relâche phi, D4 (immobilier) ajoute le logement ; la Bellman fera l'ajustement de")
+    print("    risque canonique une fois (âge, réversibilité, coût de migration).")
 
 
 if __name__ == "__main__":

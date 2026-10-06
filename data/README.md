@@ -138,6 +138,15 @@ risque que D5 : brut avant prime de risque + EC illustratif, variance portée ve
 sous saturation (~P75), puis divergence rapide au sommet. D5 (retraite capitalisée) + D6 (surplus
 capitalisé) = l'avantage patrimonial complet de la capitalisation.
 
+**Π unique assemblé (`src/engine/patrimony.py`).** Valeur patrimoniale lifetime en valeur
+présence = consommation réelle actualisée à ρ (plafonnée à la saturation) + stocks terminaux
+retraite (D5) et surplus (D6), ramenés à ρ. Deux versions, brut (r_mkt) et équivalent-certain
+(r_mkt−½γσ²) ; l'ajustement de risque canonique est à la Bellman. Conventions déclarées : φ=1
+(position de destination égale, prime salariale non intégrée, relâchée en D7), baseline locataire
+(logement = D4), imposition du capital à l'accrual. Résultat FR→US (célibataire, EC) : rester
+domine P10/P25, partir dès P50, gain jusqu'à ~11,6 M$ int. au P99,9 ; FR→UK plus mou, repasse à
+rester au P99.
+
 
 | Donnée | Symbole | Granularité | Source primaire | Source secondaire / repli | Accès | Statut |
 |--------|---------|-------------|-----------------|---------------------------|-------|--------|
