@@ -25,3 +25,16 @@ def load_wage_premium() -> Dict[str, WagePremium]:
         rows = [WagePremium(destination=r["destination"], role_ratio_ppp=float(r["role_ratio_ppp"]))
                 for r in csv.DictReader(filter(lambda l: not l.startswith("#"), fh))]
     return {r.destination: r for r in rows}
+
+
+def load_education_premium() -> Dict[str, Dict[str, float]]:
+    """Gains relatifs par niveau de diplôme et pays (OCDE EaG), pour la sensibilité D7.
+
+    Retourne {pays: {attainment: relative_earnings}}. role_ratio = premium_dest/premium_origine.
+    """
+    path = param_file("education_premium.csv")
+    out: Dict[str, Dict[str, float]] = {}
+    with path.open(newline="") as fh:
+        for r in csv.DictReader(filter(lambda l: not l.startswith("#"), fh)):
+            out.setdefault(r["country"], {})[r["attainment"]] = float(r["relative_earnings"])
+    return out

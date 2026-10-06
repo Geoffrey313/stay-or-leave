@@ -1,0 +1,18 @@
+# Raffinement D7 (angle éducation) : gains relatifs par niveau de diplôme (secondaire sup=100),
+# OCDE Education at a Glance, EARN_RELATIVE, 25-64 ans, sexes confondus. Sert à tester le role_ratio
+# (prime à rôle comparable net du niveau) par niveau de diplôme : role_ratio = premium_dest/premium_FR.
+# CONSTAT : la France rémunère mieux les diplômes AVANCÉS (master/doctorat 7-8 : FR 228,8 > US 224,7) ;
+# l'avantage relatif US est au niveau LICENCE (6). Même au sommet éducatif, role_ratio < seuil => rester.
+# LIMITE : c'est de l'ÉDUCATION, pas de l'OCCUPATION. Les rôles d'élite US du sommet (P90-P99,9,
+# tech/finance) sont payés par métier/secteur, non captés ici. Le test du sommet exige la rémunération
+# occupationnelle (BLS OES / ONS ASHE, crosswalk ISCO-SOC) : étape ouverte.
+country,attainment,relative_earnings,year
+fr,bachelor_6,158.8,2022
+fr,tertiary_5T8,179.8,2022
+fr,master_doctoral_7_8,228.8,2022
+us,bachelor_6,168.7,2024
+us,tertiary_5T8,174.4,2024
+us,master_doctoral_7_8,224.7,2024
+uk,bachelor_6,140.4,2024
+uk,tertiary_5T8,141.8,2024
+uk,master_doctoral_7_8,158.4,2024

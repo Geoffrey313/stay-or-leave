@@ -28,7 +28,7 @@ from src.engine.benchmark import stay_or_leave
 from src.engine.pension import pension_switch
 from src.engine.surplus import surplus_switch
 from src.engine.patrimony import lifetime_patrimony, stay_or_leave_lifetime
-from src.data.wage_premium import load_wage_premium
+from src.data.wage_premium import load_wage_premium, load_education_premium
 from src.engine.wage_premium import translate_rank, break_even_role_ratio
 
 SMIC_ANNUAL_COST = 28000  # borne de la zone de transferts (profil et pays de référence)
@@ -149,10 +149,20 @@ def main() -> None:
             else:
                 verdict, s = ("PARTIR" if rr >= star else "rester"), f"{star:.2f}"
             print(f"  {b.position:>8} {s:>18} {rr:>8.2f}  {verdict}")
-    print("\n    SOURCÉ (proxy éducation) : FR->US 0,97, FR->UK 0,79, tous deux SOUS le seuil =>")
-    print("    rester domine (la prime de compétence FR >= US/UK). CAVEAT : proxy moyen tertiaire,")
-    print("    sous-estime le premium des rôles d'élite US au sommet ; à raffiner par rémunération")
-    print("    occupationnelle de queue (BLS OES / ONS ASHE). Friction = kappa (D8), jamais phi.")
+    # Sensibilité par niveau de diplôme (role_ratio = premium_dest / premium_FR)
+    edu = load_education_premium()
+    print("\n  Sensibilité role_ratio par niveau de diplôme (OCDE EaG) :")
+    print(f"  {'niveau':>20} {'FR->US':>8} {'FR->UK':>8}")
+    for att, lab in [("bachelor_6", "licence"), ("tertiary_5T8", "tertiaire"),
+                     ("master_doctoral_7_8", "master/doctorat")]:
+        us = edu["us"][att] / edu["fr"][att]
+        uk = edu["uk"][att] / edu["fr"][att]
+        print(f"  {lab:>20} {us:>8.2f} {uk:>8.2f}")
+    print("    Constat : la France rémunère MIEUX les diplômes avancés (master/doctorat role_ratio")
+    print("    US 0,98 < 1) ; l'avantage US est au niveau licence (1,06). Même au sommet ÉDUCATIF,")
+    print("    rester domine. LIMITE : éducation != occupation ; les rôles d'élite US du sommet")
+    print("    (tech/finance, P90-P99,9) exigent la rémunération occupationnelle (BLS OES / ONS ASHE).")
+    print("    Friction (diplôme, langue, chômage) = kappa (D8), jamais phi.")
 
 
 if __name__ == "__main__":

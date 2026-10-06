@@ -193,6 +193,13 @@ profession), qui SOUS-ESTIME le premium des rôles d'élite US au sommet (P90-P9
 transversale = borne haute du premium causal (sélection) ; friction = κ (D8). À raffiner au sommet
 par rémunération occupationnelle de queue (BLS OES / ONS ASHE, crosswalk ISCO-SOC).
 
+**Raffinement par niveau de diplôme (`education_premium.csv`, OCDE EaG).** role_ratio FR→US par
+niveau : licence 1,06, tertiaire 0,97, master/doctorat 0,98 ; FR→UK 0,88 / 0,79 / 0,69. Contre-intuitif :
+la France rémunère MIEUX les diplômes avancés (master/doctorat US 0,98 < 1), l'avantage US est au niveau
+licence. Même au sommet ÉDUCATIF, rester domine. Limite persistante : éducation ≠ occupation ; les rôles
+d'élite US du sommet (P90-P99,9, tech/finance) payés par métier restent à tester par la rémunération
+occupationnelle. Étape ouverte avant de clore le résultat statique.
+
 
 | Donnée | Symbole | Granularité | Source primaire | Source secondaire / repli | Accès | Statut |
 |--------|---------|-------------|-----------------|---------------------------|-------|--------|
