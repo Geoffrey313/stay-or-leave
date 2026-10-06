@@ -43,6 +43,14 @@ reçoit sa référence datée dans ce ledger.
 
 ### D1 — Cascade socio-fiscale θ(C) : coût employeur → pouvoir d'achat
 
+**Ancrage data-motivé sur la distribution des gains.** θ n'est pas évalué sur une grille de
+montants ronds mais sur des positions de la distribution des salaires (percentiles P10, P25,
+P50, P75, P90, P95, P99, P99,9), position comparable entre pays (comme le rang urbain pour les
+villes). Chaque percentile de salaire net est converti en coût employeur par le coin
+cotisations patronales propre au pays (pas un multiplicateur plat). Queue (P99,9) extrapolée
+par loi de Pareto ajustée sur P90/P95/P99, déclarée modélisée. France faite (INSEE 2024,
+`earnings_distribution.csv`) ; US/UK et étiquetage des six OCDE à suivre.
+
 **θ est défini hors TVA.** La cascade θ s'arrête au revenu disponible rapporté au coût
 employeur. La taxe sur la consommation n'entre pas ici : elle vit une seule fois dans le
 bloc D3 (indice IC_p), dont les niveaux de prix comparatifs sont déjà TVA incluse. La

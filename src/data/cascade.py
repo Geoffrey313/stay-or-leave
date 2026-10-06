@@ -16,10 +16,16 @@ from src.common.paths import param_file
 
 
 class CascadePoint(BaseModel):
-    """Composantes de la cascade d'un pays, au coût employeur (monnaie locale)."""
+    """Composantes de la cascade d'un pays, au coût employeur (monnaie locale).
+
+    `position` est la position de distribution (percentile, ex. « P90 ») quand la cascade
+    est ancrée sur la distribution des gains ; vide pour les cascades encore ancrées sur les
+    points OCDE (67/100/167% du salaire moyen).
+    """
     country: str
     currency: str
     profile: str
+    position: str = ""
     cost_employer: NonNegativeInt
     benefits_year: NonNegativeInt
     disposable_year: NonNegativeInt
@@ -35,5 +41,5 @@ def load_cascade(country: str) -> List[CascadePoint]:
     """Charge la cascade d'un pays, triée par profil puis coût employeur croissant."""
     path = param_file(country, "cascade.csv")
     with path.open(newline="") as fh:
-        rows = [CascadePoint(**r) for r in csv.DictReader(fh)]
+        rows = [CascadePoint(**{k: v for k, v in r.items() if v != ""}) for r in csv.DictReader(fh)]
     return sorted(rows, key=lambda p: (p.profile, p.cost_employer))

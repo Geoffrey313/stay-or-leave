@@ -22,6 +22,7 @@ class ConversionPoint(BaseModel):
     """Taux de conversion au coût employeur donné (monnaie locale), hors taxe conso."""
     country: str
     profile: str
+    position: str
     cost_employer: int
     theta_brut: float      # (disponible - prestations) / coût employeur
     theta_elargi: float    # disponible / coût employeur
@@ -36,6 +37,7 @@ def conversion(points: List[CascadePoint]) -> List[ConversionPoint]:
         out.append(ConversionPoint(
             country=p.country,
             profile=p.profile,
+            position=p.position,
             cost_employer=c,
             theta_brut=round(salaire_seul / c, 4),
             theta_elargi=round(p.disposable_year / c, 4),

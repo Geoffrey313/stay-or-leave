@@ -37,9 +37,10 @@ def main() -> None:
         for profile, group in groupby(conv, key=lambda p: p.profile):
             pts = list(group)
             print(f"  profil : {profile}")
-            print(f"  {'C (local)':>12} {'theta_brut':>11} {'theta_elargi':>13}")
+            print(f"  {'position':>8} {'C (local)':>12} {'theta_brut':>11} {'theta_elargi':>13}")
             for p in pts:
-                print(f"  {p.cost_employer:>12} {p.theta_brut:>11.3f} {p.theta_elargi:>13.3f}")
+                print(f"  {p.position or '-':>8} {p.cost_employer:>12} "
+                      f"{p.theta_brut:>11.3f} {p.theta_elargi:>13.3f}")
             high = [p.theta_brut for p in pts if p.cost_employer >= SMIC_ANNUAL_COST]
             assert high == sorted(high, reverse=True), f"theta brut non décroissant ({country}:{profile})"
             assert all(p.theta_elargi >= p.theta_brut - 1e-9 for p in pts), \

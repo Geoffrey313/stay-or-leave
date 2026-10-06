@@ -1,0 +1,17 @@
+# Distribution des salaires NETS mensuels en EQTP, secteur privé, ensemble, France 2024.
+# Source : INSEE Première n°2079, « Les salaires dans le secteur privé en 2024 », tableau 3.
+# Base : salaire net mensuel EQTP (net de cotisations sociales, avant impôt sur le revenu).
+# Points bruts de la table (déciles + C95 + C99) ; P25/P75 interpolés et P99.9 extrapolés
+# (Pareto) sont DÉRIVÉS en aval, pas stockés ici comme s'ils étaient observés.
+percentile,net_monthly_eur
+P10,1492
+P20,1669
+P30,1823
+P40,1992
+P50,2190
+P60,2442
+P70,2785
+P80,3305
+P90,4334
+P95,5593
+P99,10261
