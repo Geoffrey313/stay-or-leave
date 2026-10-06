@@ -73,18 +73,21 @@ def main() -> None:
         fr_ppp = col["fr"].ppp_aic_local_per_intl_usd
         fr_cascade = load_cascade("fr")
         print("\n=== Bascule retraite : gain de patrimoine terminal en quittant la France ===")
-        print(f"    (r_rep={cal.r_rep_real:.1%}, r_mkt={cal.r_mkt_real:.1%}, {cal.career_years} ans ; "
-              f"célibataire ; patrimoine terminal en milliers de $ int.)")
+        print(f"    (r_rep={cal.r_rep_real:.1%} sans risque, r_mkt={cal.r_mkt_real:.1%} espérance risquée, "
+              f"EC Merton={cal.r_mkt_certainty_equivalent:.1%} ; {cal.career_years} ans ; célibataire ; k$ int.)")
+        print("    brut = borne haute AVANT risque (entre dans Pi avec sigma) ; "
+              "EC = équivalent-certain illustratif (ajustement canonique = Bellman)")
         for dest in ("us", "uk"):
             if dest not in pen:
                 continue
             sw = [s for s in pension_switch(fr_cascade, pen["fr"], pen[dest], cal)
                   if s.profile == "celibataire"]
             print(f"\n  France -> {dest.upper()} ({pen['fr'].regime} -> {pen[dest].regime})")
-            print(f"  {'position':>8} {'cotis./an':>12} {'gain bascule (k$int)':>22}")
+            print(f"  {'position':>8} {'cotis./an':>12} {'brut avant risque':>18} {'EC illustratif':>16}")
             for s in sw:
                 print(f"  {s.position:>8} {s.annual_contribution:>12.0f} "
-                      f"{s.switch_gain_lifetime / fr_ppp / 1000:>22.0f}")
+                      f"{s.switch_gain_gross_pre_risk / fr_ppp / 1000:>18.0f} "
+                      f"{s.switch_gain_ce_illustrative / fr_ppp / 1000:>16.0f}")
     # TODO engine : surplus investi net fiscalité (D6), immobilier (D4), contrepoids ; puis Bellman.
 
 

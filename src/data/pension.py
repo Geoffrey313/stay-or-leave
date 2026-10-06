@@ -22,10 +22,21 @@ class PensionParams(BaseModel):
 
 
 class Calibration(BaseModel):
-    """Calibration structurelle (hypothèses déclarées)."""
+    """Calibration structurelle (hypothèses déclarées).
+
+    r_mkt_real est l'ESPÉRANCE d'un rendement risqué (moyenne pondérée par le glide path) ;
+    sigma_mkt_real sa volatilité et risk_aversion l'aversion CRRA, pour l'ajustement de risque.
+    """
     r_rep_real: float
     r_mkt_real: float
+    sigma_mkt_real: float
+    risk_aversion: float
     career_years: int
+
+    @property
+    def r_mkt_certainty_equivalent(self) -> float:
+        """Taux équivalent-certain approché (CRRA/Merton) : r_mkt - 0,5*gamma*sigma^2."""
+        return self.r_mkt_real - 0.5 * self.risk_aversion * self.sigma_mkt_real ** 2
 
 
 def _read(path):
@@ -43,4 +54,6 @@ def load_pension() -> Dict[str, PensionParams]:
 def load_calibration() -> Calibration:
     d = {r["param"]: r["value"] for r in _read(param_file("calibration.csv"))}
     return Calibration(r_rep_real=float(d["r_rep_real"]), r_mkt_real=float(d["r_mkt_real"]),
+                       sigma_mkt_real=float(d["sigma_mkt_real"]),
+                       risk_aversion=float(d["risk_aversion"]),
                        career_years=int(float(d["career_years"])))

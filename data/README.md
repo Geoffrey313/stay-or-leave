@@ -111,9 +111,14 @@ plafonnent. Le détail par pays est dans `data/sources.yaml` (bloc `tax_engines`
 **Première brique posée (`pension.csv`, `calibration.csv`, `src/engine/pension.py`).** Régime
 par pays (répartition FR/DE/IT/ES/JP, capitalisation US/UK/CH/CA, classification du cadre),
 part de cotisation retraite (FR 27,8 % du brut OCDE, US OASDI 12,4 %, UK auto-enrolment 8 %),
-r_rep/r_mkt/horizon en calibration déclarée (statut par valeur). Gain de bascule = flux retraite
-revalorisé de r_rep à r_mkt sur l'horizon. À affiner : parts des six autres pays, r_rep par pays
-(démographie, D14), extraction exacte par microsimulateur.
+r_rep/r_mkt/σ/γ/horizon en calibration déclarée (statut par valeur). Gain de bascule = flux retraite
+revalorisé de r_rep à r_mkt sur l'horizon. **r_mkt est une espérance d'actif RISQUÉ, pas un certain** :
+le gain brut est une borne haute avant prime de risque, pas « l'avantage ». Π transporte r_mkt ET sa
+variance σ² ; l'ajustement de risque canonique est fait une fois dans la Bellman. L'équivalent-certain
+illustratif (taux CRRA/Merton r_mkt−½γσ² ≈ 3,1 %) vaut ~45 % du brut : l'écart est un résultat, pas une
+présentation. Réserves déclarées : r_mkt = moyenne pondérée par le glide path (effet de séquence ignoré) ;
+cotisation figée = canal rendement isolé (le taux de cotisation par pays est une marge distincte).
+À affiner : parts des six autres pays, r_rep par pays (démographie, D14), extraction par microsimulateur.
 
 
 | Donnée | Symbole | Granularité | Source primaire | Source secondaire / repli | Accès | Statut |

@@ -1,22 +1,32 @@
 """Bascule retraite charge -> actif (bloc D5), le moteur économique du modèle.
 
-En répartition, le flux retraite capté rend un rendement implicite faible r_rep (proche de
-la croissance de la masse salariale). En capitalisation, le même flux devient un actif qui
-compose au rendement de marché r_mkt. La valeur de la bascule, pour un agent qui quitte un
-pays de répartition pour un pays de capitalisation, est son flux de cotisation retraite
-revalorisé de r_rep à r_mkt, composé sur l'horizon de carrière restant.
+En répartition, le flux retraite capté rend un rendement implicite faible r_rep, quasi SANS
+RISQUE (proche de la croissance de la masse salariale). En capitalisation, le même flux
+devient un actif RISQUÉ dont l'espérance de rendement est r_mkt > r_rep, avec volatilité
+sigma. La valeur de la bascule, pour un agent qui quitte un pays de répartition pour un pays
+de capitalisation, est son flux de cotisation retraite revalorisé de r_rep à r_mkt, composé
+sur l'horizon de carrière.
+
+RISQUE. r_mkt est une ESPÉRANCE d'actif risqué, pas un rendement certain. Le gain brut
+ci-dessous (au taux r_mkt) est une BORNE HAUTE AVANT PRIME DE RISQUE, pas « l'avantage » de
+la capitalisation. L'ajustement de risque canonique est fait UNE SEULE FOIS, dans la Bellman,
+qui reçoit le rendement espéré r_mkt ET sa variance sigma^2. On expose ici, à titre
+d'illustration de l'écart, l'équivalent-certain approché au taux CRRA/Merton
+r_mkt - 0,5*gamma*sigma^2 (patrimoine terminal lognormal) ; ce n'est pas ce qui alimente Pi.
 
 Patrimoine terminal d'un flux annuel constant F sur T années au taux r :
     W(r, T) = F * ((1+r)^T - 1) / r.
-Gain de bascule (origine répartition -> destination capitalisation) :
-    F * [ W-facteur(r_mkt, T) - W-facteur(r_rep, T) ],
-avec F = part de cotisation retraite x coût employeur à la position considérée.
-Grid-agnostique : opère sur les positions livrées. Si l'origine n'est pas en répartition ou
-la destination pas en capitalisation, la bascule est nulle.
+
+Deux réserves déclarées :
+  - r_mkt plat = moyenne de rendement pondérée par le glide path 85->30 ; le stock terminal
+    ignore l'effet de séquence (acceptable en premier passage, nommé comme tel).
+  - la bascule fige la cotisation d'ORIGINE (origin.contrib_share * coût) et ne swappe que le
+    rendement : elle ISOLE le canal rendement, qui est la thèse. Le changement de taux de
+    cotisation entre pays (p.ex. FR 19,6 % -> US 12,4 %) est une marge distincte, non traitée ici.
 """
 from __future__ import annotations
 
-from typing import Dict, List
+from typing import List
 
 from pydantic import BaseModel
 
@@ -35,24 +45,32 @@ class PensionSwitch(BaseModel):
     position: str
     origin: str
     destination: str
-    annual_contribution: float       # flux retraite capté à cette position
-    switch_gain_lifetime: float      # patrimoine terminal gagné par la bascule
+    annual_contribution: float               # flux retraite capté (cotisation d'origine)
+    switch_gain_gross_pre_risk: float        # au taux r_mkt : BORNE HAUTE avant risque (entre dans Pi avec sigma)
+    switch_gain_ce_illustrative: float       # équivalent-certain approché (illustration de l'écart)
 
 
 def pension_switch(origin_points: List[CascadePoint], origin: PensionParams,
                    destination: PensionParams, cal: Calibration) -> List[PensionSwitch]:
-    """Gain de bascule par position pour un agent quittant `origin` vers `destination`."""
+    """Gain de bascule par position pour un agent quittant `origin` vers `destination`.
+
+    Le brut (r_mkt) est ce qui remonte dans Pi, accompagné de sigma pour que la Bellman fasse
+    l'ajustement de risque une fois ; l'EC illustratif montre l'ordre de grandeur de l'écart.
+    """
     funded = origin.regime == "payg" and destination.regime == "funded"
-    spread = (fv_annuity_factor(cal.r_mkt_real, cal.career_years)
-              - fv_annuity_factor(cal.r_rep_real, cal.career_years))
+    w_rep = fv_annuity_factor(cal.r_rep_real, cal.career_years)              # sans risque
+    w_mkt = fv_annuity_factor(cal.r_mkt_real, cal.career_years)              # espérance risquée
+    w_ce = fv_annuity_factor(cal.r_mkt_certainty_equivalent, cal.career_years)  # équivalent-certain
     out: List[PensionSwitch] = []
     for p in origin_points:
         contrib = origin.contrib_share_cost * p.cost_employer
-        gain = contrib * spread if funded else 0.0
+        gross = contrib * (w_mkt - w_rep) if funded else 0.0
+        ce = contrib * (w_ce - w_rep) if funded else 0.0
         out.append(PensionSwitch(
             profile=p.profile, position=p.position,
             origin=origin.country, destination=destination.country,
             annual_contribution=round(contrib),
-            switch_gain_lifetime=round(gain),
+            switch_gain_gross_pre_risk=round(gross),
+            switch_gain_ce_illustrative=round(ce),
         ))
     return out

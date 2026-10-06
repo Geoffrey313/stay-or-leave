@@ -1,8 +1,14 @@
 # Paramètres de calibration structurels (hypothèses déclarées, pas de la donnée observée).
 # Statut : [S] sourcé, [E] estimé, [I] posé (cf. docs/internal/research/audit-sources.md).
-# r_rep = rendement implicite de la répartition ~ croissance de la masse salariale
-#         (démographie + productivité) ; r_mkt = rendement réel long terme d'un portefeuille.
+# r_rep = rendement implicite de la répartition ~ croissance de la masse salariale (quasi
+#         sans risque). r_mkt_real = rendement réel MOYEN, pondéré par le glide path 85->30,
+#         d'un actif RISQUÉ : son espérance, pas un certain. Sa variance (sigma) et l'aversion
+#         (gamma) servent à l'ajustement de risque, fait UNE fois dans la Bellman ; le taux
+#         équivalent-certain approché (résultat CRRA/Merton, patrimoine terminal lognormal)
+#         est r_mkt - 0,5*gamma*sigma^2.
 param,value,status,source
-r_rep_real,0.012,[E],"cadre ; ~ croissance masse salariale (démographie+productivité), OCDE/COR"
-r_mkt_real,0.045,[I],"calibration ; rendement réel long terme portefeuille, DMS/Damodaran"
+r_rep_real,0.012,[E],"cadre ; ~ croissance masse salariale (démographie+productivité), OCDE/COR ; quasi sans risque"
+r_mkt_real,0.045,[I],"espérance réelle moyenne pondérée glide path 85->30, actif risqué ; DMS/Damodaran"
+sigma_mkt_real,0.12,[I],"volatilité réelle du rendement, cohérente glide path (actions ~0,18, obligations plus bas)"
+risk_aversion,2.0,[I],"CRRA gamma, valeur standard littérature cycle de vie"
 career_years,40,[I],"entrée en activité ~25 ans à retraite ~65 ans"
