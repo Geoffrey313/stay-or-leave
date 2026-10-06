@@ -1,0 +1,12 @@
+# Immobilier (bloc D4) : BASELINE LOCATAIRE. Loyer mensuel de référence, logement 1 pièce
+# en périphérie, ville de rang urbain q≈0,7 (comme le cadre), monnaie locale, ~2024.
+# Dépense pure (non capitalisée) : soustraite du pouvoir d'achat réel AVANT le partage
+# consommation/surplus, donc réduit le surplus investissable (D6) et la consommation.
+# Statut [E] : fourchettes Numbeo par ville (Lyon/Austin/Manchester). À RAFFINER : logement
+# par profil (1 pièce célibataire vs familial), par rang urbain q, pull Numbeo propre, et
+# ensuite le CANAL PROPRIÉTÉ (mensualité = intérêts perdus + capital remboursé = épargne
+# forcée bâtissant un actif terminal), avec seuil d'accession y_immo (apport, DTI ~35%, prix m²).
+country,rent_monthly_local,status,source
+fr,800,[E],"Lyon 1 pièce périphérie ~800 EUR/mois (Numbeo 2024)"
+us,1350,[E],"Austin 1 pièce périphérie ~1350 USD/mois (Numbeo 2024)"
+uk,850,[E],"Manchester 1 pièce périphérie ~850 GBP/mois (Numbeo 2024)"

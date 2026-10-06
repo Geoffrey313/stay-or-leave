@@ -21,6 +21,7 @@ from src.data.cascade import available_countries, load_cascade
 from src.data.cost_of_living import load_cost_of_living
 from src.data.pension import load_pension, load_calibration
 from src.data.capital_tax import load_capital_tax
+from src.data.housing import load_housing
 from src.engine.conversion import conversion
 from src.engine.purchasing_power import real_purchasing_power
 from src.engine.benchmark import stay_or_leave
@@ -112,7 +113,8 @@ def main() -> None:
             print(f"  {s.position:>8} {s.surplus_origin:>11.0f} {s.surplus_destination:>11.0f} "
                   f"{s.wealth_gain_gross_pre_risk/1000:>11.0f} {s.wealth_gain_ce_illustrative/1000:>9.0f}")
     # --- Pi unique : valeur patrimoniale lifetime, rester vs partir (phi=1, baseline locataire) ---
-    pat = {c: lifetime_patrimony(load_cascade(c), col, pen, tax, cal)
+    house = load_housing()
+    pat = {c: lifetime_patrimony(load_cascade(c), col, pen, tax, cal, house)
            for c in countries if c in pen}
     print("\n=== Valeur patrimoniale lifetime Pi : rester (FR) vs partir ===")
     print("    [HYPOTHÈSE phi=1 : PAS le résultat ; le résultat robuste est le seuil role_ratio* (D7)]")

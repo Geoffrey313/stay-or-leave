@@ -98,6 +98,15 @@ plafonnent. Le détail par pays est dans `data/sources.yaml` (bloc `tax_engines`
 
 ### D4 — Immobilier comme flux capitalisable
 
+**Baseline LOCATAIRE posée (`housing.csv`, câblée dans Π).** Loyer de référence (1 pièce
+périphérie, ville rang q≈0,7, Numbeo 2024, flaggé [E]) soustrait du pouvoir d'achat réel comme
+dépense pure, avant le partage consommation/surplus : il réduit le surplus investissable (D6).
+Effet : les seuils role_ratio* montent un peu (partir plus difficile) ; verdict inchangé (role_ratio
+sourcé sous le seuil → rester domine). À venir : canal PROPRIÉTÉ (mensualité = intérêts perdus +
+capital remboursé = épargne forcée, actif terminal), seuil d'accession y_immo (apport, DTI ~35 %,
+prix m²), logement par profil et par rang urbain.
+
+
 | Donnée | Symbole | Granularité | Source primaire | Source secondaire / repli | Accès | Statut |
 |--------|---------|-------------|-----------------|---------------------------|-------|--------|
 | Prix au m² par ville / rang urbain | $P_{m^2}(p,q)$ | ville | Numbeo *Property Investment* (`property-investment/rankings.jsp`, profils par ville) | Deloitte *Property Index* ; stats nationales (INSEE/Notaires, Destatis) | web public gratuit ; PDF | manquant |

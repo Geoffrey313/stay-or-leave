@@ -21,8 +21,9 @@ CONVENTIONS déclarées :
     le même percentile qu'à l'origine. C'est une hypothèse forte (un cadre P90 français ne
     devient pas mécaniquement un P90 américain) ; relâchée au bloc D7. Ce Pi n'est donc PAS
     encore la réponse « rester vs partir », c'est sa version à position égale.
-  - Baseline LOCATAIRE : le canal logement (bloc D4) n'est pas intégré ; il réduira aussi le
-    surplus investissable.
+  - Baseline LOCATAIRE : le loyer (bloc D4) est soustrait comme dépense pure (il réduit le
+    surplus investissable) ; le canal PROPRIÉTÉ (épargne forcée, actif terminal) n'est pas
+    encore intégré.
   - Imposition du capital à l'ACCRUAL (rendement taxé chaque année, r_mkt*(1 - tau)). Une
     imposition à la réalisation (plus-value terminale seule) différerait, surtout au sommet.
 Grid-agnostique : opère sur les positions livrées.
@@ -36,6 +37,7 @@ from pydantic import BaseModel
 from src.data.cascade import CascadePoint
 from src.data.capital_tax import CapitalTax
 from src.data.cost_of_living import CostOfLiving
+from src.data.housing import Housing
 from src.data.pension import Calibration, PensionParams
 from src.engine.pension import fv_annuity_factor
 
@@ -60,8 +62,12 @@ class Patrimony(BaseModel):
 
 def lifetime_patrimony(points: List[CascadePoint], col: Dict[str, CostOfLiving],
                        pension: Dict[str, PensionParams], tax: Dict[str, CapitalTax],
-                       cal: Calibration) -> List[Patrimony]:
-    """Assemble Pi par (profil, position) pour un pays, en valeur présente, $ internationaux."""
+                       cal: Calibration, housing: Dict[str, Housing] | None = None) -> List[Patrimony]:
+    """Assemble Pi par (profil, position) pour un pays, en valeur présente, $ internationaux.
+
+    Baseline LOCATAIRE (D4) : si `housing` est fourni, le loyer réel annuel est soustrait du
+    pouvoir d'achat réel avant le partage consommation/surplus (dépense pure, non capitalisée).
+    """
     T, rho = cal.career_years, cal.discount_rate_rho
     sat = cal.consumption_saturation_intl_usd
     flow_factor = pv_annuity_factor(rho, T)
@@ -71,8 +77,10 @@ def lifetime_patrimony(points: List[CascadePoint], col: Dict[str, CostOfLiving],
         c = p.country
         ppp = col[c].ppp_aic_local_per_intl_usd
         real_pp = p.disposable_year / ppp                       # pouvoir d'achat réel ($ int.)
-        consumption = min(real_pp, sat)
-        surplus = max(0.0, real_pp - sat)
+        rent_real = (housing[c].rent_monthly_local * 12 / ppp) if housing and c in housing else 0.0
+        real_after_rent = max(0.0, real_pp - rent_real)         # loyer = dépense pure (locataire)
+        consumption = min(real_after_rent, sat)
+        surplus = max(0.0, real_after_rent - sat)
         consumption_pv = consumption * flow_factor
 
         # Stock retraite (D5) : répartition -> r_rep (sans risque) ; capitalisation -> r_mkt (risqué)
