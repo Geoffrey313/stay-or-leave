@@ -41,6 +41,7 @@ from src.engine.simulate import simulate_moments
 from src.analysis.solver_gate import (check_gate, all_pass, format_gate,
                                        amenity_identifiability, retention_check)
 from src.analysis.estimate_amenity_migration import estimate as estimate_amenity, estimate_amenity_curve
+from src.analysis.estimate_amenity_heterogeneous import estimate_heterogeneous
 
 SMIC_ANNUAL_COST = 28000  # borne de la zone de transferts (profil et pays de référence)
 
@@ -344,8 +345,22 @@ def main(full: bool = False) -> None:
         print("      ~0,3 c_ref se révèle dès qu'une destination tire fort (CH bascule OU US élite), masquée")
         print("      (plancher) quand le tir est faible (US proxy, répartition->répartition). MAIS corridor")
         print("      CH QUASI-BIMODAL : le net saute de ~1,0 à ~0,02 sans passer par 0,06 -> le modèle à")
-        print("      agent représentatif ENCADRE mais n'atteint pas l'intermédiaire ; les 6% observés exigent")
-        print("      une HÉTÉROGÉNÉITÉ d'attachement (distribution de A) non modélisée, travaux futurs.")
+        print("      agent représentatif ENCADRE mais n'atteint pas l'intermédiaire ; les 6% exigent une")
+        print("      HÉTÉROGÉNÉITÉ d'attachement (distribution de A), estimée ci-dessous.")
+        # --- Attachement HÉTÉROGÈNE : distribution de A, ferme le bimodal ---
+        print("\n    ATTACHEMENT HÉTÉROGÈNE (distribution de A, net(A) pré-calculé puis re-pondéré) :")
+        for dest, mom in [("ch", "migration_moments_ch.csv"), ("us", "migration_moments.csv")]:
+            h = estimate_heterogeneous(destination=dest, moments_csv=mom)
+            sh = h["moments_sim"]
+            print(f"      FR->{dest} : mu_A={h['mu_A']:.0f} ({h['mu_A']/res.cref:.2f} c_ref) sigma_A={h['sigma_A']:.0f}"
+                  f" -> net {sh['abroad_share_end']:.3f} vs {h['moments_obs']['emigrant_share']} obs, distance {h['distance']:.3f}")
+        print("      L'hétérogénéité FERME le bimodal : FR->CH passe d'une distance 0,74 (agent représentatif")
+        print("      bloqué à ~0,02) à ~0,09 (atteint 0,06). Estimande plus riche : attache MOYENNE mu_A +")
+        print("      DISPERSION sigma_A. NUANCE à nommer : mu_A diffère par destination (CH ~0,65 c_ref vs US")
+        print("      ~0) alors que l'attache à la France est UNE propriété des Français. Donc A est à lire")
+        print("      comme le NET stay-amenity SPÉCIFIQUE à la destination (attache France nette de l'appel")
+        print("      propre au pays : proximité/langue/réseaux), PAS une attache universelle ; une estimation")
+        print("      JOINTE (un seul A à travers les corridors) est le test de cohérence suivant (travaux futurs).")
     else:
         print("    SMM FR->CH (A* ~0,32 c_ref, corridor quasi-bimodal) : python reproduce.py --full")
 
