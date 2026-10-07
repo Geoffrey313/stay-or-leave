@@ -83,13 +83,15 @@ def lifetime_patrimony(points: List[CascadePoint], col: Dict[str, CostOfLiving],
         surplus = max(0.0, real_after_rent - sat)
         consumption_pv = consumption * flow_factor
 
-        # Stock retraite (D5) : répartition -> r_rep (sans risque) ; capitalisation -> r_mkt (risqué)
-        contrib = pension[c].contrib_share_cost * p.cost_employer / ppp  # en $ int.
-        funded = pension[c].regime == "funded"
-        r_pension_gross = cal.r_mkt_real if funded else cal.r_rep_real
-        r_pension_ce = cal.r_mkt_certainty_equivalent if funded else cal.r_rep_real
-        pension_pv_gross = contrib * fv_annuity_factor(r_pension_gross, T) * to_pv
-        pension_pv_ce = contrib * fv_annuity_factor(r_pension_ce, T) * to_pv
+        # Stock retraite (D5), cotisation SCINDÉE : part répartition -> r_rep (sans risque) ;
+        # part capitalisée -> r_mkt (risqué). Un pays à régime unique = une part nulle (inchangé) ;
+        # un pays mixte (CH) somme les deux stocks à leurs rendements respectifs.
+        contrib_payg = pension[c].payg_share * p.cost_employer / ppp      # en $ int.
+        contrib_funded = pension[c].funded_share * p.cost_employer / ppp
+        pension_pv_gross = (contrib_payg * fv_annuity_factor(cal.r_rep_real, T)
+                            + contrib_funded * fv_annuity_factor(cal.r_mkt_real, T)) * to_pv
+        pension_pv_ce = (contrib_payg * fv_annuity_factor(cal.r_rep_real, T)
+                         + contrib_funded * fv_annuity_factor(cal.r_mkt_certainty_equivalent, T)) * to_pv
 
         # Stock surplus (D6) : investi à r_mkt net d'impôt sur les plus-values (accrual), risqué
         net = 1 - tax[c].capgains_tax_rate

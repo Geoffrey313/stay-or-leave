@@ -15,10 +15,25 @@ from src.common.paths import param_file
 
 
 class PensionParams(BaseModel):
-    """Régime et part de cotisation retraite d'un pays (part du coût employeur)."""
+    """Cotisation retraite d'un pays, SCINDÉE par régime (part du coût employeur) :
+    part RÉPARTITION (-> droit W_p, rendement r_rep) et part CAPITALISÉE (-> pot W_f, r_mkt).
+    Un pays à régime unique est le cas particulier où une des deux parts est nulle (FR répartition
+    pure, US/UK capitalisation pure) ; un pays mixte porte les deux (CH : AVS répartition + BVG
+    capitalisé). Le routage du split est fait par la Bellman à deux accumulateurs."""
     country: str
-    regime: str  # payg | funded
-    contrib_share_cost: NonNegativeFloat
+    payg_share: NonNegativeFloat     # cotisation répartition / coût employeur
+    funded_share: NonNegativeFloat   # cotisation capitalisée / coût employeur
+
+    @property
+    def contrib_share_cost(self) -> float:
+        """Cotisation retraite totale (répartition + capitalisée), pour compat statique."""
+        return self.payg_share + self.funded_share
+
+    @property
+    def regime(self) -> str:
+        """Régime DOMINANT (compat avec le switch statique binaire D5) : la vraie scission vit
+        dans payg_share/funded_share et n'est utilisée que par le dynamique."""
+        return "funded" if self.funded_share > self.payg_share else "payg"
 
 
 class Calibration(BaseModel):
@@ -50,8 +65,9 @@ def _read(path):
 
 def load_pension() -> Dict[str, PensionParams]:
     rows = _read(param_file("pension.csv"))
-    return {r["country"]: PensionParams(country=r["country"], regime=r["regime"],
-                                        contrib_share_cost=float(r["contrib_share_cost"]))
+    return {r["country"]: PensionParams(country=r["country"],
+                                        payg_share=float(r["payg_share"]),
+                                        funded_share=float(r["funded_share"]))
             for r in rows}
 
 

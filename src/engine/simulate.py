@@ -52,7 +52,7 @@ def simulate_moments(res) -> dict:
     nf, npp = len(S["Wf_g"]), len(S["Wp_g"])
     Wf_g, Wp_g = S["Wf_g"], S["Wp_g"]
     H, netsaleA, rent = S["H"], S["netsaleA"], S["rent"]
-    real_c, contrib_c, funded_c = S["real_c"], S["contrib_c"], S["funded_c"]
+    real_c, contrib_payg_c, contrib_funded_c = S["real_c"], S["contrib_payg_c"], S["contrib_funded_c"]
     r_f, r_p, sat = S["r_f"], S["r_p"], S["sat"]
     dvec = S["dvec"]; land = S["land"]
     ages = res.ages
@@ -64,8 +64,8 @@ def simulate_moments(res) -> dict:
     flow = {}
     for c in (o, d_):
         for ip in range(npos):
-            _, sf, sp = _tenure_flow(ip, H[c], real_c[c][ip], contrib_c[c][ip],
-                                     funded_c[c], rent[c], sat, nd, dvec)
+            _, sf, sp = _tenure_flow(ip, H[c], real_c[c][ip], contrib_payg_c[c][ip],
+                                     contrib_funded_c[c][ip], rent[c], sat, nd, dvec)
             flow[(c, ip)] = (sf, sp)
 
     departures, returns = {}, {}

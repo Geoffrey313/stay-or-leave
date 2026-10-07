@@ -1,11 +1,12 @@
-# Retraite (bloc D5) : régime et part de cotisation retraite, par pays.
-# regime : payg (répartition, rendement implicite r_rep) ou funded (capitalisation, r_mkt).
-#          Classification reprise du cadre (Partie C) : répartition FR/DE/IT/ES/JP ;
-#          capitalisation US/UK/CH/CA (401k, DC, LPP, RRSP).
-# contrib_share_cost : flux retraite capté (patronal+salarial) en part du COÛT employeur.
-# Statut par valeur : [S] sourcé, [E] estimé/dérivé. Première calibration, à affiner
-# (extraction exacte par microsimulateur ; r_rep par pays via démographie, bloc D14).
-country,regime,contrib_share_cost,status,source
-fr,payg,0.196,[E],"OCDE Pensions at a Glance 2024 : 27,8% du brut / ~1,42 coût sur brut"
-us,funded,0.124,[S],"OASDI 12,4% (SSA, statutaire) ; pilier capitalisé 401k au-dessus"
-uk,funded,0.080,[S],"auto-enrolment 8% DC (statutaire, gov.uk)"
+# Retraite (bloc D5) : cotisation retraite SCINDÉE par régime, en part du COÛT employeur.
+# payg_share = part RÉPARTITION (-> droit W_p, rendement implicite r_rep) ; funded_share = part
+# CAPITALISÉE (-> pot W_f, r_mkt). Un pays à régime unique = une part nulle (FR répartition pure ;
+# US/UK capitalisation pure). Un pays MIXTE porte les deux (CH : AVS répartition + BVG capitalisé).
+# La Bellman à deux accumulateurs route le split ; le switch statique D5 lit le régime DOMINANT.
+# Statut par valeur : [S] sourcé, [E] estimé/dérivé, [I] posé. Classification du cadre (Partie C) :
+# répartition FR/DE/IT/ES/JP ; capitalisation US/UK/CA ; MIXTE CH (1er pilier AVS + 2e pilier LPP).
+country,payg_share,funded_share,status,source
+fr,0.196,0.0,[E],"répartition pure ; OCDE Pensions at a Glance 2024 27,8% brut / ~1,42 coût"
+us,0.0,0.124,[S],"capitalisation ; OASDI 12,4% (SSA) + 401k au-dessus"
+uk,0.0,0.080,[E],"capitalisation ; auto-enrolment 8% DC (gov.uk)"
+ch,0.094,0.073,[E],"MIXTE : AVS/AI/APG répartition 10,6% brut (~0,094 du coût) ; BVG capitalisé ~12,5% du salaire coordonné age-moyen (~0,073 du coût, cap déduction de coordination) ; OFAS/estv 2024"

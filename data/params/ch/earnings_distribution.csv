@@ -1,0 +1,12 @@
+# Distribution des salaires BRUTS mensuels EQTP, ensemble de l'économie, Suisse 2022.
+# Source : Office fédéral de la statistique (OFS/BFS), Enquête suisse sur la structure des salaires
+# (LSE/ESS) 2022. Points SOURCÉS : P10 = 4487, médiane P50 = 6788, P90 = 12178 CHF/mois (OFS,
+# communiqué « salaire médian 6788 CHF en 2022 »). Comme pour FR/US/UK, les points intermédiaires
+# et la queue sont DÉRIVÉS en aval, pas stockés comme observés : P25/P75 par interpolation
+# log-linéaire en percentile entre les points OFS ; P95/P99/P99,9 par extrapolation de Pareto
+# au-dessus du P90 (alpha ~2,3, cadre). BRUT (vs FR net) : la cascade statutaire CH part du brut.
+# Annualisation : x12 (LSE standardise au salaire mensuel ; le 13e mois éventuel est hors périmètre).
+percentile,gross_monthly_chf,status,source
+P10,4487,[S],"OFS LSE 2022, 10e centile salaire mensuel brut EQTP"
+P50,6788,[S],"OFS LSE 2022, salaire médian mensuel brut EQTP"
+P90,12178,[S],"OFS LSE 2022, 90e centile salaire mensuel brut EQTP"

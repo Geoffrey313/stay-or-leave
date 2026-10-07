@@ -65,16 +65,17 @@ def _country_flows(country: str, col, pension, tax, housing, cal):
     ppp = col[country].ppp_aic_local_per_intl_usd
     sat = cal.consumption_saturation_intl_usd
     rent = (housing[country].rent_monthly_local * 12 / ppp) if country in housing else 0.0
-    funded = pension[country].regime == "funded"
+    pp = pension[country]
     cons, save_f, save_p, positions, real = [], [], [], [], []
     for p in pts:
         real_pp = p.disposable_year / ppp
         after = max(0.0, real_pp - rent)
         surplus = max(0.0, after - sat)
-        contrib = pension[country].contrib_share_cost * p.cost_employer / ppp
+        contrib_payg = pp.payg_share * p.cost_employer / ppp     # -> droit répartition (r_rep)
+        contrib_funded = pp.funded_share * p.cost_employer / ppp  # -> pot funded (r_mkt)
         cons.append(min(after, sat))
-        save_f.append(surplus + (contrib if funded else 0.0))   # -> pot funded (r_mkt)
-        save_p.append(0.0 if funded else contrib)               # -> droit répartition (r_rep)
+        save_f.append(surplus + contrib_funded)
+        save_p.append(contrib_payg)
         positions.append(p.position); real.append(real_pp)
     return positions, np.array(cons), np.array(save_f), np.array(save_p), np.array(real)
 
@@ -126,16 +127,17 @@ def _batch_interp(slices, Wf_g, wfa, Wp_g, wp):
 
 
 def _country_primitives(c, col, pension):
-    """Par pays : positions, revenu réel, cotisation retraite réelle, régime funded, PPP. Sans loyer
-    (le logement est traité par tenure dans le solveur, bloc D4)."""
+    """Par pays : positions, revenu réel, cotisation retraite SCINDÉE (répartition -> W_p ;
+    capitalisée -> W_f), PPP. Sans loyer (le logement est traité par tenure dans le solveur, D4)."""
     pts = [p for p in load_cascade(c) if p.profile == "celibataire"]
     pts.sort(key=lambda p: p.cost_employer)
     ppp = col[c].ppp_aic_local_per_intl_usd
-    funded = pension[c].regime == "funded"
+    pp = pension[c]
     real = np.array([p.disposable_year / ppp for p in pts])
-    contrib = np.array([pension[c].contrib_share_cost * p.cost_employer / ppp for p in pts])
+    contrib_payg = np.array([pp.payg_share * p.cost_employer / ppp for p in pts])
+    contrib_funded = np.array([pp.funded_share * p.cost_employer / ppp for p in pts])
     pos = [p.position for p in pts]
-    return pos, real, contrib, funded, ppp
+    return pos, real, contrib_payg, contrib_funded, ppp
 
 
 def _housing_params(c, own, ref, ppp, real, npos, ownership):
@@ -153,17 +155,19 @@ def _housing_params(c, own, ref, ppp, real, npos, ownership):
             "fee": o.sale_fee_share, "y_immo": y_immo}
 
 
-def _tenure_flow(ip, H, real_val, contrib_val, funded, rent_val, sat, nd, dvec):
+def _tenure_flow(ip, H, real_val, contrib_payg, contrib_funded, rent_val, sat, nd, dvec):
     """Flux par durée d selon tenure (bloc D4). Propriétaire (rang>=thr) : sort la mensualité M tant
     que d<=terme puis 0 (prêt éteint = loyer imputé émergent) ; le principal part en équité (capté
-    par d, pas ici). Locataire : sort le loyer de marché. Renvoie cons(nd), sf(nd), sp(scalaire)."""
+    par d, pas ici). Locataire : sort le loyer de marché. La cotisation retraite est SCINDÉE :
+    part capitalisée -> épargne funded (sf), part répartition -> droit W_p (sp).
+    Renvoie cons(nd), sf(nd), sp(scalaire)."""
     owner = ip >= H["thr"]
     hout = np.where(dvec <= H["term"], H["M"], 0.0) if owner else np.full(nd, rent_val)
     after = real_val - hout
     cons = np.minimum(after, sat)
     surplus = np.maximum(0.0, after - sat)
-    sf = surplus + (contrib_val if funded else 0.0)
-    sp = 0.0 if funded else contrib_val
+    sf = surplus + contrib_funded     # -> pot funded (r_mkt)
+    sp = contrib_payg                 # -> droit répartition (r_rep)
     return cons, sf, sp
 
 
@@ -221,15 +225,15 @@ def solve(origin: str, destination: str, col: Dict[str, CostOfLiving],
     sat = cal.consumption_saturation_intl_usd
     floor = cal.subsistence_floor_intl_usd
     prim = {c: _country_primitives(c, col, pension) for c in (origin, destination)}
-    pos_o, real_o, contrib_o, funded_o, ppp_o = prim[origin]
+    pos_o, real_o, contrib_payg_o, contrib_funded_o, ppp_o = prim[origin]
     npos = len(pos_o)
     med = pos_o.index("P50") if "P50" in pos_o else npos // 2
     cref = float(real_o[med])
     rent = {c: (housing[c].rent_monthly_local * 12 / prim[c][4]) if c in housing else 0.0
             for c in (origin, destination)}
     real_c = {origin: real_o, destination: prim[destination][1]}
-    contrib_c = {origin: contrib_o, destination: prim[destination][2]}
-    funded_c = {origin: funded_o, destination: prim[destination][3]}
+    contrib_payg_c = {origin: contrib_payg_o, destination: prim[destination][2]}
+    contrib_funded_c = {origin: contrib_funded_o, destination: prim[destination][3]}
     H = {c: _housing_params(c, own, ref, prim[c][4], prim[c][1], npos, ownership)
          for c in (origin, destination)}
     Dcap = max(H[origin]["term"], H[destination]["term"]) if ownership else 0
@@ -287,8 +291,8 @@ def solve(origin: str, destination: str, col: Dict[str, CostOfLiving],
             A_here = dyn.amenity if c == origin else 0.0
             for ip in range(npos):
                 owner = ip >= H[c]["thr"]
-                cons, sf, sp = _tenure_flow(ip, H[c], real_c[c][ip], contrib_c[c][ip],
-                                            funded_c[c], rent[c], sat, nd, dvec)
+                cons, sf, sp = _tenure_flow(ip, H[c], real_c[c][ip], contrib_payg_c[c][ip],
+                                            contrib_funded_c[c][ip], rent[c], sat, nd, dvec)
                 wf_n = Wf_g[None, :] * (1 + r_f[c]) + sf[:, None]        # (nd,nf)
                 wp_n = Wp_g * (1 + r_p) + sp
                 dn_map, wfa_map = _transition_maps(ip, wf_n, H[c], netsaleA[c], nd, Dcap, npos, H[c]["down"])
@@ -309,8 +313,8 @@ def solve(origin: str, destination: str, col: Dict[str, CostOfLiving],
                         wf_m0 = wf_a; d_land = 0; hout_o = rent[other]
                     after_o = real_c[other][il] - hout_o
                     cons_o = min(after_o, sat); surplus_o = max(0.0, after_o - sat)
-                    sf_o = surplus_o + (contrib_c[other][il] if funded_c[other] else 0.0)
-                    sp_o = 0.0 if funded_c[other] else contrib_c[other][il]
+                    sf_o = surplus_o + contrib_funded_c[other][il]
+                    sp_o = contrib_payg_c[other][il]
                     A_o = dyn.amenity if other == origin else 0.0
                     cons_move = np.maximum(cons_o + A_o - unf, floor)    # (nd,nf)
                     wf_m = wf_m0 * (1 + r_f[other]) + sf_o
@@ -353,7 +357,7 @@ def solve(origin: str, destination: str, col: Dict[str, CostOfLiving],
     sim = {"Ptrans": Ptrans, "land": land, "Wf_g": Wf_g, "Wp_g": Wp_g, "r_f": r_f, "r_p": r_p,
            "kappa": dyn.kappa, "return_cost": return_cost, "sat": sat, "floor": floor,
            "nd": nd, "Dcap": Dcap, "dvec": dvec, "npos": npos, "H": H, "netsaleA": netsaleA,
-           "real_c": real_c, "contrib_c": contrib_c, "funded_c": funded_c, "rent": rent,
+           "real_c": real_c, "contrib_payg_c": contrib_payg_c, "contrib_funded_c": contrib_funded_c, "rent": rent,
            "origin": origin, "destination": destination, "age_mig_max": dyn.age_mig_max,
            "age_start": dyn.age_start, "amenity": dyn.amenity, "cref": cref}
     return BellmanResult(ages=ages, positions=pos_o, real=real_o, threshold=threshold,
