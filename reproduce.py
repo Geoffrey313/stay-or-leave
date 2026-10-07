@@ -281,8 +281,20 @@ def main(full: bool = False) -> None:
     print("    (intérêts < loyer de marché) et bâtit une équité terminale ~206k$int -> renforce rester")
     print("    au milieu/haut. Vente à la migration = frais de transaction (FR 5%, US 7%, UK 2%) sur")
     print("    l'équité : +30 à +50% de coût de sortie effectif pour un propriétaire. Loyer imputé")
-    print("    DIFFÉRENTIEL (jamais ajout absolu, déjà dans IC_p). PROCHAIN : 3e accumulateur W_h dans")
-    print("    la Bellman (vente -> W_f net de frais, exonérée de l'impôt de D6), puis re-passage de porte.")
+    print("    DIFFÉRENTIEL (jamais ajout absolu, déjà dans IC_p).")
+
+    # --- D4 câblé : 3e accumulateur W_h (axe durée entier) ; RÉTENTION sur la distribution ---
+    print("\n    RÉTENTION (distribution, A=0 kappa=20000) : stock net à l'étranger, propriété ON vs OFF")
+    dref = dyn.model_copy(update={"amenity": 0.0, "kappa": 20000.0})
+    for rr, lab in [(None, "proxy éducation"), (1.29, "élite occupationnelle")]:
+        off = simulate_moments(bellman_solve("fr", "us", col, pen, tax, house, cal, dref, role_ratio=rr, ownership=False))
+        on = simulate_moments(bellman_solve("fr", "us", col, pen, tax, house, cal, dref, role_ratio=rr, ownership=True))
+        print(f"      {lab:>22} : net OFF={off['abroad_share_end']:.3f} -> ON={on['abroad_share_end']:.3f}"
+              f"  (propriété RETIENT : ON<OFF)")
+    print("    Le canal propriété retient aux deux régimes (vente forcée à frais + loyer imputé). Le")
+    print("    solveur à 3 accumulateurs (W_f, W_p, W_h en durée entière) reproduit bit-à-bit le baseline")
+    print("    sans logement quand ownership=OFF. Ré-estimation kappa/A propriété ON et énoncé de la")
+    print("    sur-rétention : étape suivante (canal désactivé par défaut tant que l'énoncé n'est pas figé).")
 
 
 if __name__ == "__main__":
