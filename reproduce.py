@@ -192,19 +192,27 @@ def main() -> None:
     res = bellman_solve("fr", "us", col, pen, tax, house, cal, dyn)
     thr = res.threshold
     print("\n=== Bellman dynamique : seuil de départ par âge, France -> US ===")
-    print(f"    (état âge×pays×position×pot funded ; r_rep={cal.r_rep_real:.1%} vs funded EC="
-          f"{cal.r_mkt_certainty_equivalent:.1%} ; kappa={dyn.kappa:.0f}, A={dyn.amenity:.0f}, lambda={dyn.lambda_return} ;")
-    print(f"     migration bloquée > {dyn.age_mig_max} ans ; phi=1 atterrissage ; équivalent-certain)")
+    print(f"    (état âge×pays×position×pot funded W_f×droit répartition W_p ; r_rep={cal.r_rep_real:.1%} vs")
+    print(f"     funded EC={cal.r_mkt_certainty_equivalent:.1%} ; kappa={dyn.kappa:.0f}, A={dyn.amenity:.0f}, "
+          f"lambda={dyn.lambda_return}, delta={dyn.return_cost_slope} ;")
+    print(f"     migration bloquée > {dyn.age_mig_max} ans ; atterrissage en RANG net du niveau role_ratio="
+          f"{res.role_ratio:.2f} (D7, PLUS phi=1) ;")
+    print(f"     coût de retour CROISSANT avec la durée à l'étranger ; équivalent-certain)")
     print(f"  {'âge':>5}  seuil de départ (position | revenu réel $ int.)")
     for t in range(dyn.age_start, dyn.age_mig_max + 1, 5):
         v = thr.get(t)
         print(f"  {t:>5}  {'rester à toute position' if v is None else f'{v[0]} | {v[1]:.0f}'}")
-    print("    Lecture : on part JEUNE (long horizon pour composer la bascule capitalisée), la")
-    print("    migration s'éteignant avec l'âge (condition de régularité). phi=1 est optimiste :")
-    print("    sous role_ratio occupationnel d'élite (>seuil) partir s'étend, sous le proxy éducation")
-    print("    (<1) il se restreint. Estimation SMM sur flux (D13, solveur 2 accumulateurs corrigé,")
-    print("    module src.analysis.estimate_amenity_migration) : A*~15k, kappa*~10k ; stock net à")
-    print("    l'étranger ~3,7% (vs 6% obs) ; taux de retour sur-prédit (~0,96 vs 0,5), à raffiner.")
+    print("    Lecture : on part JEUNE (long horizon pour composer la bascule capitalisée), la migration")
+    print("    s'éteignant avec l'âge. Atterrissage en rang net du niveau (D7) : role_ratio=1 redonne phi=1 ;")
+    print("    le proxy éducation (0,97) ~ identité au grain des 8 percentiles ; la queue d'OCCUPATION")
+    print("    d'élite (role_ratio>1,1) décale vers le haut et étend le départ (commit du test du sommet).")
+    print("    CONSTAT D13 (estimation NON publiée ici) : la SMM sur flux (module estimate_amenity_migration)")
+    print("    reste faussée par un défaut de pondération du processus de revenu — la distribution de")
+    print("    position de la cohorte est la stationnaire UNIFORME de la marche tridiagonale, qui met 37,5%")
+    print("    de la masse dans le top-3 percentiles (P95-P99,9) contre ~7,5% de masse réelle de population.")
+    print("    La queue qui migre est donc sur-pondérée ~5x -> churn (émigrés bruts ~0,88, retour ~0,94).")
+    print("    Correctif requis avant lecture de kappa/A : pondérer le processus par la masse de population")
+    print("    par ancrage de percentile (distribution initiale ET stationnaire de la transition).")
 
 
 if __name__ == "__main__":

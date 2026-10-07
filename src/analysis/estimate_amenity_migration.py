@@ -45,8 +45,13 @@ def _distance(sim: dict, obs: Dict[str, float]) -> float:
     return d
 
 
-def estimate(a_grid=None, kappa_grid=None) -> dict:
-    """Recherche sur grille (A, kappa) ; renvoie le meilleur et la surface."""
+def estimate(a_grid=None, kappa_grid=None, role_ratio=None) -> dict:
+    """Recherche sur grille (A, kappa) ; renvoie le meilleur et la surface.
+
+    role_ratio : prime à rôle comparable D7 injectée dans l'atterrissage en rang. None = valeur
+    sourcée (proxy éducation, wage_premium.csv) ; passer une valeur de queue (occupation d'élite)
+    pour la sensibilité du régime où vivent les partants réels.
+    """
     col, pen, tax, house = load_cost_of_living(), load_pension(), load_capital_tax(), load_housing()
     cal, dyn = load_calibration(), load_dynamics()
     obs = load_observed()
@@ -56,7 +61,7 @@ def estimate(a_grid=None, kappa_grid=None) -> dict:
     for A in a_grid:
         for kap in kappa_grid:
             d = dyn.model_copy(update={"amenity": float(A), "kappa": float(kap)})
-            res = solve("fr", "us", col, pen, tax, house, cal, d)
+            res = solve("fr", "us", col, pen, tax, house, cal, d, role_ratio=role_ratio)
             sim = simulate_moments(res)
             dist = _distance(sim, obs)
             surface.append((A, kap, dist, sim["peak_departure_age"], sim["emigrant_share"], sim["return_rate"]))

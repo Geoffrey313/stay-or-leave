@@ -3,9 +3,11 @@
 Corrige le churn du premier passage (qui simulait aux seuils au W représentatif) : on propage
 la masse sur l'état complet via les grilles de politique du solveur. Comme partir coûte kappa
 (baisse de W_f), le retour immédiat devient coûteux et l'oscillation départ/retour disparaît.
-Transitions de patrimoine par snap au noeud le plus proche (déterministe) ; transition de
-position par la matrice tridiagonale. Moments : taux de départ par âge (et pic), part nette à
-l'étranger, taux de retour.
+La masse qui bouge atterrit au RANG translaté (role_ratio, D7 : land_o2d en partant, land_d2o
+en rentrant), pas au même indice ; le retour paie un coût CROISSANT avec la durée à l'étranger
+(res.return_cost[t]). Transitions de patrimoine par snap au noeud le plus proche (déterministe) ;
+transition de position par la matrice tridiagonale. Moments : taux de départ par âge (et pic),
+part nette à l'étranger, taux de retour.
 """
 from __future__ import annotations
 
@@ -49,22 +51,25 @@ def simulate_moments(res) -> dict:
                 D[o] = D[o] - moved
                 add = np.zeros_like(D[d])
                 for p in range(npos):
+                    pland = int(res.land_o2d[p])         # atterrissage en rang (D7)
                     for i in range(nf):
                         inew = _snap(Wf, max(Wf[i] - res.kappa, 0.0))
                         for j in range(npp):
-                            add[p, inew, j] += moved[p, i, j]
+                            add[pland, inew, j] += moved[p, i, j]
                 D[d] = D[d] + add
-        if pr is not None:                               # retours destination -> origine (coût lambda*kappa)
+        if pr is not None:                               # retours destination -> origine (coût croissant avec la durée)
             moved = D[d] * pr
             ret = moved.sum()
             if ret > 0:
+                rcost = res.return_cost[t]
                 D[d] = D[d] - moved
                 add = np.zeros_like(D[o])
                 for p in range(npos):
+                    pland = int(res.land_d2o[p])         # atterrissage en rang (D7)
                     for i in range(nf):
-                        inew = _snap(Wf, max(Wf[i] - res.lambda_kappa, 0.0))
+                        inew = _snap(Wf, max(Wf[i] - rcost, 0.0))
                         for j in range(npp):
-                            add[p, inew, j] += moved[p, i, j]
+                            add[pland, inew, j] += moved[p, i, j]
                 D[o] = D[o] + add
         departures[t], returns[t] = dep, ret
         # accumulation de patrimoine (snap) puis transition de position, par pays
