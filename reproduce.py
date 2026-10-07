@@ -175,26 +175,24 @@ def main(full: bool = False) -> None:
     print("    (tech/finance, P90-P99,9) exigent la rémunération occupationnelle (BLS OES / ONS ASHE).")
     print("    Friction (diplôme, langue, chômage) = kappa (D8), jamais phi.")
 
-    # Test du sommet par OCCUPATION (role_ratio = prime_occ_US / prime_occ_FR)
+    # Test du sommet par OCCUPATION, SOURCÉ sur base homogène (SES 2018 FR/UK + OEWS 2023 US, médiane)
     occ = load_occupation_premium()
     star_us = next((b.role_ratio_star for b in break_even_role_ratio(pat["fr"], pat["us"])
                     if b.profile == "celibataire" and b.position == "P90"), None)
-    print(f"\n  TEST DU SOMMET par OCCUPATION (FR->US ; seuil role_ratio* ~1,03-1,14, P90={star_us}) :")
-    print(f"  {'occupation (groupe)':>24} {'role_ratio':>11}  verdict au sommet")
     fr_mgr, fr_prof = occ["fr"]["managers"], occ["fr"]["professionals"]
-    pairs = [("Management", "management", fr_mgr), ("Legal", "legal", fr_prof),
-             ("Computer/math", "computer_mathematical", fr_prof),
-             ("Healthcare", "healthcare_practitioners", fr_prof),
-             ("Engineering", "architecture_engineering", fr_prof),
-             ("Business/finance", "business_financial", fr_prof)]
-    for lab, key, frp in pairs:
-        rr = occ["us"][key] / frp
-        verdict = "PARTIR" if (star_us and rr >= star_us) else "borderline/rester"
-        print(f"  {lab:>24} {rr:>11.2f}  {verdict}")
-    print("    => role_ratio OCCUPATION dépasse le seuil pour les rôles d'élite : au sommet")
-    print("    (P90-P99,9, surreprésenté par ces métiers), PARTIR domine. Verdict OCCUPATION-DÉPENDANT :")
-    print("    rester pour le diplômé moyen, partir pour les occupations d'élite. UK : groupes non")
-    print("    sourçables proprement (médianes par groupe non accessibles). Friction = kappa (D8).")
+    print(f"\n  TEST DU SOMMET par OCCUPATION, sourcé base homogène (seuil role_ratio* ~1,03-1,14, P90={star_us}) :")
+    print(f"  {'occupation (groupe)':>22} {'FR->US':>8} {'FR->UK':>8}  verdict au sommet (US)")
+    rows = [("Dirigeants", occ["us"]["management"] / fr_mgr, occ["uk"]["managers"] / fr_mgr),
+            ("Computer/math*", occ["us"]["computer_mathematical"] / fr_prof, occ["uk"]["professionals"] / fr_prof),
+            ("Finance", occ["us"]["business_financial"] / fr_prof, occ["uk"]["professionals"] / fr_prof)]
+    for lab, rr_us, rr_uk in rows:
+        verdict = "PARTIR" if (star_us and rr_us >= star_us) else "borderline/rester"
+        print(f"  {lab:>22} {rr_us:>8.2f} {rr_uk:>8.2f}  {verdict}")
+    print("    (* Computer/math US = SOC-15 étroit vs ISCO-2 large -> role_ratio gonflé, à écarter.)")
+    print("    => FR->US : role_ratio d'élite > 1 ROBUSTE (dirigeants 1,27, finance 1,22) ; au sommet")
+    print("    (P90-P99,9, surreprésenté par ces métiers) PARTIR domine. FR->UK : role_ratio <= ~1")
+    print("    (dirigeants 0,85 : la France sur-rémunère ses dirigeants vs le UK) -> l'élite US part,")
+    print("    pas l'élite UK. Verdict OCCUPATION-DÉPENDANT et DESTINATION-dépendant. Friction = kappa (D8).")
 
     # --- Modèle dynamique : Bellman, seuil de départ par âge y*(t) ---
     dyn = load_dynamics()
@@ -233,19 +231,21 @@ def main(full: bool = False) -> None:
             # --- SMM COMPLÈTE (D13) : A et kappa en FONCTION du role_ratio (le seuil, pas le verdict) ---
             # Résultat de publication ; régénéré par `python reproduce.py --full` (déterministe, lourd).
             curve = estimate_amenity_curve()
-            print("\n=== SMM COMPLÈTE (D13) : A et kappa en fonction de la prime de queue role_ratio ===")
-            print("    Le signe de A dépend de la prime d'occupation de queue. On publie donc A/kappa en")
-            print("    FONCTION d'elle, pas un verdict unique (discipline D7 : le seuil, pas le verdict).")
+            print("\n=== SMM COMPLÈTE (D13) : A et kappa en fonction de la prime d'élite role_ratio (SOURCÉE) ===")
+            print("    Le signe de A dépend de la prime d'occupation d'élite, DÉSORMAIS SOURCÉE (Eurostat SES")
+            print("    2018 FR + BLS OEWS 2023 US, cf. occupation_premium.csv). On publie A/kappa en FONCTION")
+            print("    du role_ratio le long de la borne sourcée (discipline D7 : le seuil, pas le verdict).")
             print(f"  {'role_ratio':>10} {'A*/c_ref':>9} {'A* ($)':>8} {'kappa* ($)':>11} {'dist':>6}  statut / source")
             for p in curve:
                 tag = " [A EN BORNE BASSE]" if p["A_at_lower_bound"] else (" [A en borne haute]" if p["A_at_upper_bound"] else "")
                 print(f"  {p['role_ratio']:>10.2f} {p['A']/res.cref:>9.2f} {p['A']:>8.0f} {p['kappa']:>11.0f}"
                       f" {p['distance']:>6.3f}  {p['kind']}{tag}")
-            print("    Lecture : sous le proxy éducation SOURCÉ (0,97 ~ phi=1), A est en BORNE BASSE, non")
-            print("    séparable de kappa (les flux disent « A aussi bas que permis » ; sous phi~1 c'est kappa")
-            print("    qui porte, A non identifié là). A monte vers ~0,24 c_ref à l'élite occupationnelle —")
-            print("    role_ratio 1,14-1,29 POSÉ, non sourcé (BLS OES / ONS ASHE). La revendication d'un")
-            print("    attachement POSITIF chez les partants dépend donc de ce paramètre non sourcé.")
+            print("    Lecture : flag levé. La borne US sourcée (1,07-1,27) STRADDLE le seuil A>0 : sur la")
+            print("    MOYENNE d'élite (1,09) A reste en borne basse, sur la MÉDIANE (1,27) A>0 (~0,24 c_ref).")
+            print("    Le signe de A chez les partants d'élite US n'est plus suspendu à un posé : il est borné")
+            print("    par de la donnée et se joue au choix médiane/moyenne. Le UK sourcé est <= ~1 -> A au")
+            print("    plancher : l'aménité positive est un phénomène US, pas UK. Résidu : tech/finance partagent")
+            print("    le comparateur ISCO-2 (SES keyless 1 chiffre) ; dirigeants = concept propre.")
         else:
             # --- Point SOURCÉ (défaut rapide) : SMM au role_ratio du proxy éducation ---
             est = estimate_amenity()
@@ -289,7 +289,7 @@ def main(full: bool = False) -> None:
     print("\n=== D4 : encadrement par le canal propriété (switch documenté, OFF = headline) ===")
     dref = dyn.model_copy(update={"amenity": 0.0, "kappa": 20000.0})
     print("    Stock net à l'étranger à params communs (A=0, kappa=20000), propriété OFF vs ON :")
-    for rr, lab in [(None, "proxy éducation"), (1.29, "élite occupationnelle")]:
+    for rr, lab in [(None, "proxy éducation"), (1.27, "élite US médiane (sourcée)")]:
         off = simulate_moments(bellman_solve("fr", "us", col, pen, tax, house, cal, dref, role_ratio=rr, ownership=False))
         on = simulate_moments(bellman_solve("fr", "us", col, pen, tax, house, cal, dref, role_ratio=rr, ownership=True))
         print(f"      {lab:>22} : OFF={off['abroad_share_end']:.3f} (borne basse) -> ON={on['abroad_share_end']:.3f} (borne haute)")
@@ -304,7 +304,8 @@ def main(full: bool = False) -> None:
     print("    est compatible avec plusieurs mécanismes que ce modèle NE SÉPARE PAS : (1) louer plutôt que")
     print("    posséder (tenure endogène) ; (2) GARDER-ET-LOUER plutôt que vendre (évite la vente forcée,")
     print("    d'où vient la sur-rétention) ; (3) dénominateur MEAE « Français » != cadres (écart de")
-    print("    population) ; (4) queue d'élite sous-sourcée (role_ratio>1,29). La localiser dans la")
+    print("    population) ; (4) prime d'élite à la marge (borne sourcée 1,07-1,27 straddle le seuil A>0,")
+    print("    médiane vs moyenne ; tech/finance en proxy ISCO-2). La localiser dans la")
     print("    fourchette relève de la tenure endogène et/ou du garder-et-louer : travaux futurs.")
     print("    Propriété-ON reste un SWITCH (ownership=True), jamais le défaut tant que ces marges ne sont")
     print("    pas modélisées. Solveur 3 accumulateurs = baseline sans logement bit-à-bit quand OFF.")

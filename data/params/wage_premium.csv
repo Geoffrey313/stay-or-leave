@@ -13,11 +13,13 @@
 # (2) coupe transversale = BORNE HAUTE du premium causal d'un partant (sélection positive) ;
 # (3) friction (diplôme, langue, chômage) = bloc D8 (kappa), jamais phi. À raffiner au sommet
 # par rémunération occupationnelle de queue (BLS OES / ONS ASHE, crosswalk ISCO-SOC).
-# DÉCISIF (constat SMM 06/10) : la prime de queue d'élite (role_ratio ~1,14-1,29) est POSÉE, pas
-# sourcée, et elle décide le SIGNE de l'aménité estimée (A en borne basse sous 0,97 sourcé ; A>0
-# seulement à 1,29). La revendication « attachement au pays positif chez les partants » dépend donc
-# de ce seul paramètre non sourcé. À RÉSOUDRE (BLS OES / ONS ASHE, crosswalk ISCO-SOC) AVANT de
-# publier A>0 ; sinon A reste présenté en pure fonction du role_ratio avec bande de sensibilité.
+# FLAG LEVÉ (07/10) : la prime de queue d'élite est désormais SOURCÉE sur base homogène (Eurostat
+# SES 2018 pour FR/UK + BLS OEWS 2023 pour US, médiane brute annuelle ; cf. occupation_premium.csv).
+# Borne US/FR = 1,07-1,27 (dirigeants concept propre 1,09 moy / 1,27 méd ; finance 1,07-1,22 ;
+# tech 1,61 écarté, SOC-15 étroit vs ISCO-2 large). Cette borne STRADDLE le seuil A>0 : A=0 sur la
+# moyenne, A>0 (~0,24 c_ref) sur la médiane. UK/FR = 0,85-1,03 (A au plancher) -> le UK ne sur-
+# rémunère pas l'élite, l'aménité positive est un phénomène US. On publie donc A en FONCTION du
+# role_ratio avec la borne sourcée, le signe se jouant au choix médiane/moyenne, plus sur un posé.
 destination,role_ratio_ppp,status,source
 us,0.970,[E],"OCDE EaG EARN_RELATIVE tertiaire 5-8 vs sec.sup, 25-64 ; US174,4/FR179,8 ; proxy éducation"
 uk,0.789,[E],"OCDE EaG EARN_RELATIVE tertiaire 5-8 vs sec.sup, 25-64 ; UK141,8/FR179,8 ; proxy éducation"

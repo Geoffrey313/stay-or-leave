@@ -77,13 +77,15 @@ def estimate(a_grid=None, kappa_grid=None, role_ratio=None) -> dict:
             "A_at_lower_bound": best[0] <= a_floor, "A_at_upper_bound": best[0] >= a_ceil}
 
 
-# Ancres de role_ratio pour la courbe A*(role_ratio). 0,97 = proxy éducation SOURCÉ (OCDE EaG) ;
-# 1,14 et 1,29 = prime d'OCCUPATION d'élite, POSÉE (non sourcée : BLS OES / ONS ASHE, crosswalk
-# ISCO-SOC, à résoudre avant toute revendication d'aménité positive). Le signe de A dépend de
-# cette prime de queue, donc on publie A et kappa en FONCTION d'elle, pas un verdict unique.
-ROLE_RATIO_ANCHORS = [(0.970, "proxy éducation (sourcé)"),
-                      (1.140, "occupation élite (posé)"),
-                      (1.290, "occupation élite (posé)")]
+# Ancres de role_ratio pour la courbe A*(role_ratio), TOUTES SOURCÉES désormais (flag levé) :
+# 0,97 = proxy éducation tertiaire (OCDE EaG) ; 1,09 = prime d'élite US, MOYENNE ; 1,27 = prime
+# d'élite US, MÉDIANE (Eurostat SES 2018 base FR + BLS OEWS 2023 base US, dirigeants = concept
+# propre, cf. occupation_premium.csv). La borne US sourcée (1,07-1,27) STRADDLE le seuil A>0 : A=0
+# sur la moyenne, A>0 (~0,24 c_ref) sur la médiane. Le UK sourcé est <= ~1 (A au plancher), le
+# résultat d'aménité est un phénomène US. On publie A/kappa en FONCTION du role_ratio, pas un verdict.
+ROLE_RATIO_ANCHORS = [(0.970, "US proxy éducation (OCDE EaG)"),
+                      (1.090, "US élite, moyenne (SES/OEWS)"),
+                      (1.270, "US élite dirigeants, médiane (SES/OEWS)")]
 
 
 def estimate_amenity_curve(anchors=ROLE_RATIO_ANCHORS) -> list:

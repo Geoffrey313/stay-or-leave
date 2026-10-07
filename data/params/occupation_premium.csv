@@ -1,18 +1,26 @@
-# Raffinement D7 (angle OCCUPATION, le test du sommet) : rémunération moyenne par grand groupe
-# professionnel RAPPORTÉE à la moyenne nationale (sans dimension, net du niveau). role_ratio
-# FR->dest = prime_occ_dest / prime_occ_FR. CONSTAT : au niveau occupation, role_ratio FR->US
-# dépasse le seuil role_ratio* (1,03-1,14) pour les rôles d'élite => PARTIR domine au sommet,
-# ce que le proxy éducation (diplôme) ratait. Verdict occupation-dépendant.
-# Sources : US = BLS OES mai 2025 (moyenne annuelle par groupe / moyenne tous métiers 69 770 $).
-# FR = ILOSTAT EAR_EHRA (gains horaires moyens par groupe ISCO / total). Limites : US moyenne
-# (tirée par le haut intra-groupe) vs FR moyenne horaire ; groupes larges ; coupe = borne haute
-# du premium causal (sélection) ; UK non disponible proprement (médianes par groupe non accessibles).
+# Raffinement D7 (angle OCCUPATION, le test du sommet) : rémunération par grand groupe professionnel
+# RAPPORTÉE à la moyenne nationale (sans dimension, net du niveau). role_ratio FR->dest =
+# prime_occ_dest / prime_occ_FR. SOURCÉ sur BASE HOMOGÈNE (corrige l'ancien mélange BLS-moyenne-
+# annuelle / ILOSTAT-moyenne-horaire) : FR et UK = Eurostat Structure of Earnings Survey
+# (earn_ses_annual), MÉDIANE brute annuelle, 2018 (dernière vague SES incluant le UK), ISCO-08
+# 1 chiffre ; US = BLS OEWS mai 2023, MÉDIANE annuelle, groupes SOC (un seul pont de base US-vs-SES,
+# qui joue EN FAVEUR : le SES compte les primes, grasses au sommet, donc mettre les US en base SES
+# ÉLARGIRAIT la prime US). Médiane = primaire ; la moyenne (robustesse) est en commentaire.
+#
+# CONSTAT : role_ratio FR->US > 1 ROBUSTE pour l'élite (dirigeants 1,27 méd / 1,09 moy ; finance
+# 1,22 / 1,07). role_ratio FR->UK <= ~1 (dirigeants 0,85 : la France sur-rémunère ses dirigeants
+# vs le UK) -> le UK ne sur-rémunère PAS l'élite, le résultat d'aménité est un phénomène US.
+# CAVEAT proxy : le SES keyless ne résout que l'ISCO 1 chiffre, donc tech et finance partagent le
+# comparateur FR/UK « professionnels » (ISCO-2) ; le cell US tech 1,61 est GONFLÉ (SOC-15 étroit vs
+# ISCO-2 large) -> à ÉCARTER ; le verdict US>FR tient sur les dirigeants (concept propre, 1,09-1,27)
+# et la finance (1,07-1,22). Coupe = borne haute du premium causal (sélection). Moyennes (robustesse) :
+# US dirigeants 2,104 tech 1,728 finance 1,384 ; UK dirigeants 1,735 pro 1,251 ; FR dirigeants 1,925
+# pro 1,288 => US/FR 1,09/1,34/1,07 ; UK/FR 0,90/0,97.
 country,occupation,premium_over_national_avg,source
-fr,managers,1.36,"ILOSTAT EAR_EHRA ISCO-1 / total"
-fr,professionals,1.33,"ILOSTAT EAR_EHRA ISCO-2 / total"
-us,management,2.08,"BLS OES mai 2025 145260/69770"
-us,legal,2.00,"BLS OES mai 2025 139510/69770"
-us,computer_mathematical,1.72,"BLS OES mai 2025 120080/69770"
-us,healthcare_practitioners,1.56,"BLS OES mai 2025 108700/69770"
-us,architecture_engineering,1.53,"BLS OES mai 2025 106830/69770"
-us,business_financial,1.37,"BLS OES mai 2025 95230/69770"
+fr,managers,1.908,"Eurostat SES earn_ses_annual, médiane annuelle 2018, ISCO-1 (58740/30786)"
+fr,professionals,1.349,"Eurostat SES earn_ses_annual, médiane 2018, ISCO-2 (41515/30786) ; proxy tech+finance"
+uk,managers,1.616,"Eurostat SES earn_ses_annual, médiane annuelle 2018, ISCO-1 (50823/31451)"
+uk,professionals,1.389,"Eurostat SES earn_ses_annual, médiane 2018, ISCO-2 (43684/31451) ; proxy tech+finance"
+us,management,2.432,"BLS OEWS mai 2023, médiane annuelle, SOC 11-0000 (116880/48060)"
+us,computer_mathematical,2.168,"BLS OEWS mai 2023, médiane, SOC 15-0000 (104200/48060) ; vs ISCO-2 large => role_ratio gonflé, écarter"
+us,business_financial,1.645,"BLS OEWS mai 2023, médiane, SOC 13-0000 (79050/48060)"

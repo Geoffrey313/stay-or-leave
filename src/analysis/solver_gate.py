@@ -43,7 +43,7 @@ def amenity_identifiability(col, pen, tax, house, cal, dyn,
 
 
 def retention_check(col, pen, tax, house, cal, dyn, a_ref=0.0, kappa_ref=20000.0,
-                    role_ratios=(None, 1.29)) -> dict:
+                    role_ratios=(None, 1.27)) -> dict:
     """Condition 4 (bloc D4) : à params communs (migration positive), le stock net à l'étranger
     baisse-t-il avec le canal propriété activé ? Renvoie net ON/OFF par régime + le drapeau ON<OFF.
     Mesurée sur la DISTRIBUTION. Indépendante du défaut du headline."""
