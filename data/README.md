@@ -109,11 +109,12 @@ prix m²), logement par profil et par rang urbain.
 
 | Donnée | Symbole | Granularité | Source primaire | Source secondaire / repli | Accès | Statut |
 |--------|---------|-------------|-----------------|---------------------------|-------|--------|
-| Prix au m² par ville / rang urbain | $P_{m^2}(p,q)$ | ville | Numbeo *Property Investment* (`property-investment/rankings.jsp`, profils par ville) | Deloitte *Property Index* ; stats nationales (INSEE/Notaires, Destatis) | web public gratuit ; PDF | manquant |
-| Loyer au m² par ville | $\ell_p(C,q)$ | ville | Numbeo *Rent* (profils par ville : loyer 1 et 3 pièces, centre/périphérie) | idem national | web public gratuit | manquant |
-| Taux de crédit immobilier | $r_m$ | pays, 2026 | Banques centrales (Banque de France, Freddie Mac US, BoE, Bundesbank) | OCDE *Analytical House Prices* | FRED ; SDMX | manquant |
-| Taux d'endettement maximal admissible | $\bar{\eta}$ | pays | Régulateurs (HCSF France ~35 %) | normes bancaires nationales | doc | partiel |
-| Frais de transaction / portage | — | pays | Notaires / barèmes nationaux | Global Property Guide | web | manquant |
+| Prix au m² par ville / rang urbain | $P_{m^2}(p,q)$ | ville | Numbeo *Property Investment* (`property-investment/rankings.jsp`, profils par ville) | Deloitte *Property Index* ; stats nationales (INSEE/Notaires, Destatis) | web public gratuit ; PDF | acquis [E] (`ownership.csv`) : Lyon 3848, Austin 4671, Manchester 2898 /m², Numbeo 2025 ; taille réf. 45 m² posée [I] ; à recouper INSEE-Notaires/Zillow/ONS |
+| Loyer au m² par ville | $\ell_p(C,q)$ | ville | Numbeo *Rent* (profils par ville : loyer 1 et 3 pièces, centre/périphérie) | idem national | web public gratuit | partiel : loyer de référence par ville dans `housing.csv` (baseline locataire) ; par m² encore manquant |
+| Taux de crédit immobilier | $r_m$ | pays, 2026 | Banques centrales (Banque de France, Freddie Mac US, BoE, Bundesbank) | OCDE *Analytical House Prices* | FRED ; SDMX | acquis [S] (`ownership.csv`) : FR 3,2 % (BdF, hors assurance), US 6,75 % (Freddie Mac/FRED), UK 4,95 % (Moneyfacts 5 ans) |
+| Taux d'endettement maximal admissible | $\bar{\eta}$ | pays | Régulateurs (HCSF France ~35 %) | normes bancaires nationales | doc | acquis (`ownership.csv`) : FR 35 % DTI [S] (HCSF), US 43 % DTI [S] (CFPB QM), UK 4,5× LTI [S] (BoE) → 35 % proxy DTI [E] flaggé |
+| Frais de transaction / portage (vendeur) | — | pays | Notaires / barèmes nationaux | Global Property Guide | web | acquis (`ownership.csv`) : FR 5 % [E] (agence ; notaire = coût acheteur, exclu), US 7 % [S], UK 2,5 % [E] |
+| Durée du prêt / apport | — | pays | conventions nationales | — | doc | acquis [E] (`ownership.csv`) : FR 25 ans/15 %, US 30 ans/15 %, UK 25 ans/20 % |
 
 ### D5 — Système de retraite et bascule charge → actif
 

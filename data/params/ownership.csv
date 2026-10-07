@@ -1,0 +1,40 @@
+# Canal propriété (bloc D4), paramètres par pays. Format long : country,param,value,status,source.
+# Statut [S] sourcé, [E] estimé/proxy, [I] posé. Le logement de RÉFÉRENCE (occupé ou loué) est le
+# 1 pièce périphérie de la baseline locataire (housing.csv) : le loyer imputé du propriétaire se
+# compare à CE loyer (différentiel, jamais un ajout absolu — le logement est déjà dans IC_p/D3).
+# La vente de la résidence principale à la migration est EXONÉRÉE de plus-value (FR totale, US
+# abattement large) : pas d'impôt du capital de D6 sur le produit de vente.
+#
+# Sources : prix/m² hors centre = Numbeo 2025 (via lifeindexed, pages Numbeo en 503 ; à recouper
+# INSEE-Notaires/Zillow/ONS). Taux : FR Banque de France Panorama prêts déc-2025 (hors assurance ;
+# TAEG tout compris ~3,85%) ; US Freddie Mac PMMS / FRED MORTGAGE30US (~2024-25) ; UK Moneyfacts
+# 5 ans fixe 2025. Plafonds : FR HCSF taux d'effort 35% ; US CFPB Qualified Mortgage ~43% DTI ;
+# UK Bank of England FPC = plafond 4,5x le revenu (loan-to-INCOME, PAS un DTI) -> proxy DTI flaggé.
+# Durée/apport : conventions nationales (non spécifiques ville). Frais VENDEUR : FR agence ~5%
+# (le notaire ~7-8% est un coût ACHETEUR, exclu) ; US commission ~5,6% + clôture ~1-3% ; UK agence
+# ~1,2-1,8% + légal. Fourchettes resserrées à une valeur centrale, flaggées [E] quand négociables.
+country,param,value,status,source
+fr,price_m2_local,3848,[E],"Lyon hors centre, Numbeo 2025 (via lifeindexed)"
+fr,mortgage_rate,0.032,[S],"Banque de France, nouveaux prêts immobiliers hors assurance, ~2025"
+fr,dti_max,0.35,[S],"HCSF taux d'effort 35% (contraignant depuis 2022)"
+fr,dti_is_lti,0,[S],"FR = vrai taux d'endettement (DTI), pas un multiple de revenu"
+fr,term_years,25,[E],"convention FR, maximum HCSF 25 ans"
+fr,down_payment_share,0.15,[E],"apport ~10-20% (convention nationale)"
+fr,sale_fee_share,0.05,[E],"agence côté vendeur ~5% (notaire exclu, coût acheteur)"
+us,price_m2_local,4671,[E],"Austin hors centre, Numbeo 2025 (via lifeindexed)"
+us,mortgage_rate,0.0675,[S],"Freddie Mac PMMS 30 ans fixe, moyenne ~2024-25 (FRED MORTGAGE30US)"
+us,dti_max,0.43,[S],"CFPB Qualified Mortgage ~43% DTI (benchmark Appendix Q)"
+us,dti_is_lti,0,[S],"US = DTI (back-end)"
+us,term_years,30,[E],"convention US, prêt 30 ans"
+us,down_payment_share,0.15,[E],"apport ~13-20% (médiane primo plus bas)"
+us,sale_fee_share,0.07,[S],"commission agent ~5,6% + frais de clôture vendeur ~1-3%"
+uk,price_m2_local,2898,[E],"Manchester hors centre, Numbeo 2025 (via lifeindexed)"
+uk,mortgage_rate,0.0495,[S],"Moneyfacts 5 ans fixe moyen, 2025"
+uk,dti_max,0.35,[E],"PROXY : UK impose un plafond 4,5x le revenu (LTI), pas un DTI ; 35% posé en équivalent"
+uk,dti_is_lti,1,[S],"UK = plafond loan-to-income 4,5x (Bank of England FPC), structurellement un LTI"
+uk,term_years,25,[E],"convention UK 25-30 ans"
+uk,down_payment_share,0.20,[E],"dépôt ~15-25% (primo ~15-20%)"
+uk,sale_fee_share,0.025,[E],"agence ~1,2-1,8% + frais légaux"
+# Taille du logement de référence (m²) commune aux trois : 1 pièce ~45 m². POSÉE [I] ; à raffiner
+# par profil et rang urbain. Prix de référence = price_m2_local * ref_size_m2.
+ref_all,ref_size_m2,45,[I],"1 pièce ~45 m2, posé (baseline locataire housing.csv)"

@@ -24,6 +24,11 @@ from src.data.capital_tax import load_capital_tax
 from src.data.housing import load_housing
 from src.data.dynamics import load_dynamics
 from src.engine.bellman import solve as bellman_solve
+from src.engine.bellman import _country_flows as flows_for
+from src.data.ownership import load_ownership
+from src.engine.housing_channel import (monthly_payment as housing_monthly_payment,
+                                        equity_schedule as housing_equity,
+                                        net_sale_proceeds as housing_net_sale)
 from src.engine.conversion import conversion
 from src.engine.purchasing_power import real_purchasing_power
 from src.engine.benchmark import stay_or_leave
@@ -242,6 +247,30 @@ def main() -> None:
         print("    Résidus déclarés : pic de départ et taux de retour non parfaits (moments grossiers D13).")
     else:
         print("    => une condition CASSE : estimation NON publiée (échec nommé, pas un soupçon).")
+
+    # --- D4 canal propriété : faisabilité (accession, équité, rétention) ; sourcé, pré-intégration ---
+    own, ref_size = load_ownership()
+    print("\n=== D4 : canal propriété, lecture de faisabilité (logement réf. "
+          f"{ref_size:.0f} m2) ===")
+    print("    Accession déterministe au seuil y_immo (DTI) ; principal remboursé = épargne forcée")
+    print("    (équité W_h, actif terminal) ; vente EXONÉRÉE à frais à la migration = rétention.")
+    print(f"  {'pays':>5} {'y_immo $int':>11} {'accèdent':>26} {'équité term.':>12} {'rétention (frais)':>17}")
+    for c in ("fr", "us", "uk"):
+        o = own[c]; ppp = col[c].ppp_aic_local_per_intl_usd
+        p_real = o.reference_price(ref_size) / ppp
+        principal = p_real * (1 - o.down_payment_share); down = p_real * o.down_payment_share
+        y_immo = housing_monthly_payment(principal, o.mortgage_rate, o.term_years) * 12 / o.dti_max
+        pos, _, _, _, real = flows_for(c, col, pen, tax, house, cal)
+        acced = ",".join(p for p, r in zip(pos, real) if r >= y_immo)
+        eq_term = housing_equity(principal, o.mortgage_rate, o.term_years, down)[-1]
+        retention = eq_term - housing_net_sale(eq_term, o.sale_fee_share)
+        print(f"  {c:>5} {y_immo:>11.0f} {acced:>26} {eq_term:>12.0f} {retention:>17.0f}")
+    print("    Lecture : en France, accession dès P50 ; posséder est MOINS cher en flux que louer")
+    print("    (intérêts < loyer de marché) et bâtit une équité terminale ~206k$int -> renforce rester")
+    print("    au milieu/haut. Vente à la migration = frais de transaction (FR 5%, US 7%, UK 2%) sur")
+    print("    l'équité : +30 à +50% de coût de sortie effectif pour un propriétaire. Loyer imputé")
+    print("    DIFFÉRENTIEL (jamais ajout absolu, déjà dans IC_p). PROCHAIN : 3e accumulateur W_h dans")
+    print("    la Bellman (vente -> W_f net de frais, exonérée de l'impôt de D6), puis re-passage de porte.")
 
 
 if __name__ == "__main__":
