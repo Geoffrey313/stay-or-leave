@@ -198,7 +198,7 @@ def _transition_maps(ip_from, wf_n, H, netsaleA, nd, Dcap, npos, down):
 def solve(origin: str, destination: str, col: Dict[str, CostOfLiving],
           pension: Dict[str, PensionParams], tax: Dict[str, CapitalTax],
           housing: Dict[str, Housing], cal: Calibration, dyn: Dynamics,
-          role_ratio: float | None = None, ownership: bool = False,
+          role_ratio: float | None = None, ownership: bool = False, dest_appeal: float = 0.0,
           nf: int = 12, npp: int = 8, Wf_max: float = 6_000_000.0, Wp_max: float = 2_000_000.0):
     """Résout la Bellman à TROIS accumulateurs (W_f funded, W_p répartition, W_h équité logement).
 
@@ -272,7 +272,7 @@ def solve(origin: str, destination: str, col: Dict[str, CostOfLiving],
             owner = ip >= H[c]["thr"]
             for d in range(nd):
                 E = eqA[c][d] if owner else 0.0
-                rf = WF * annf(r_f[c]) + WP * annf(r_p) + E * annf(r_p) + (dyn.amenity if c == origin else 0.0)
+                rf = WF * annf(r_f[c]) + WP * annf(r_p) + E * annf(r_p) + (dyn.amenity if c == origin else dest_appeal)
                 V[c][ip, d] = ann_util * _crra(np.maximum(rf, floor) / cref, g)
 
     def cont(c, ip_from, dn_map, wfa_map, wp):
@@ -291,7 +291,7 @@ def solve(origin: str, destination: str, col: Dict[str, CostOfLiving],
         rg = np.zeros((npos, nd, nf, npp), dtype=bool)
         for c in countries:
             other = destination if c == origin else origin
-            A_here = dyn.amenity if c == origin else 0.0
+            A_here = dyn.amenity if c == origin else dest_appeal   # attache au pays (origine) ou appel de destination (eta)
             for ip in range(npos):
                 owner = ip >= H[c]["thr"]
                 cons, sf, sp = _tenure_flow(ip, H[c], real_c[c][ip], contrib_payg_c[c][ip],
@@ -318,7 +318,7 @@ def solve(origin: str, destination: str, col: Dict[str, CostOfLiving],
                     cons_o = min(after_o, sat); surplus_o = max(0.0, after_o - sat)
                     sf_o = surplus_o + contrib_funded_c[other][il]
                     sp_o = contrib_payg_c[other][il]
-                    A_o = dyn.amenity if other == origin else 0.0
+                    A_o = dyn.amenity if other == origin else dest_appeal
                     cons_move = np.maximum(cons_o + A_o - unf, floor)    # (nd,nf)
                     wf_m = wf_m0 * (1 + r_f[other]) + sf_o
                     wp_m = Wp_g * (1 + r_p) + sp_o

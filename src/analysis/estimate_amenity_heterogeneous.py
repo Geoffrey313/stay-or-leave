@@ -38,15 +38,17 @@ def _trunc_normal_weights(a_grid: np.ndarray, mu: float, sigma: float) -> np.nda
 
 
 def precompute_net_by_amenity(destination: str, kappa: float, role_ratio=None,
-                              a_grid=None) -> Dict[float, dict]:
-    """net(A) et comptes bruts par âge, pour A sur la grille (une résolution Bellman par A)."""
+                              a_grid=None, dest_appeal=0.0) -> Dict[float, dict]:
+    """net(A) et comptes bruts par âge, pour A sur la grille (une résolution Bellman par A).
+    dest_appeal = appel de destination eta (amenity non-income, ex. Londres) ; 0 par défaut."""
     col, pen, tax, house = load_cost_of_living(), load_pension(), load_capital_tax(), load_housing()
     cal, dyn = load_calibration(), load_dynamics()
     a_grid = np.array([0, 2500, 5000, 7500, 10000, 12500, 15000, 20000, 30000]) if a_grid is None else np.asarray(a_grid)
     out = {}
     for A in a_grid:
         d = dyn.model_copy(update={"amenity": float(A), "kappa": float(kappa)})
-        sim = simulate_moments(solve("fr", destination, col, pen, tax, house, cal, d, role_ratio=role_ratio))
+        sim = simulate_moments(solve("fr", destination, col, pen, tax, house, cal, d,
+                                     role_ratio=role_ratio, dest_appeal=float(dest_appeal)))
         total_dep = sim["emigrant_share"]
         out[float(A)] = {"net": sim["abroad_share_end"], "total_dep": total_dep,
                          "total_ret": sim["return_rate"] * total_dep,
@@ -79,11 +81,12 @@ def _distance(sim: dict, obs: Dict[str, float]) -> float:
 
 def estimate_heterogeneous(destination="ch", moments_csv="migration_moments_ch.csv",
                            kappa=20000.0, role_ratio=None, mu_grid=None, sigma_grid=None,
-                           a_grid=None) -> dict:
+                           a_grid=None, dest_appeal=0.0) -> dict:
     """Estime (mu_A, sigma_A) de la distribution d'attachement qui reproduit le flux du corridor.
-    net(A) pré-calculé une fois, puis re-pondéré -> la recherche (mu, sigma) est rapide."""
+    net(A) pré-calculé une fois, puis re-pondéré -> la recherche (mu, sigma) est rapide.
+    dest_appeal : appel de destination eta (ex. Londres) injecté dans le solveur."""
     a_grid = np.array([0, 2500, 5000, 7500, 10000, 12500, 15000, 20000, 30000]) if a_grid is None else np.asarray(a_grid)
-    by_a = precompute_net_by_amenity(destination, kappa, role_ratio, a_grid)
+    by_a = precompute_net_by_amenity(destination, kappa, role_ratio, a_grid, dest_appeal)
     obs = load_observed(moments_csv)
     mu_grid = np.arange(0, 20001, 2500) if mu_grid is None else np.asarray(mu_grid)
     sigma_grid = np.array([2000, 4000, 6000, 8000, 10000, 15000]) if sigma_grid is None else np.asarray(sigma_grid)

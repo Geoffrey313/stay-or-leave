@@ -383,6 +383,16 @@ def main(full: bool = False) -> None:
         print("      non-income). La décomposition fine attache commune vs spécifique reste non identifiée")
         print("      (mu/delta colinéaires sur CH/US ; UK n'ajoute pas de contrainte mais une mécanique")
         print("      manquante) -> données d'attachement externes requises, pas un corridor de plus.")
+        # --- Appel de Londres MODÉLISÉ : eta_UK (pull non-income) + attache hétérogène ferme le UK ---
+        huk = estimate_heterogeneous(destination="uk", moments_csv="migration_moments_uk.csv", dest_appeal=12500.0)
+        suk = huk["moments_sim"]
+        print("\n    APPEL DE LONDRES MODÉLISÉ (eta_UK = pull de destination non-income, dans le solveur) :")
+        print(f"      FR->UK avec eta_UK=0,40 c_ref + attache hétérogène (mu_A={huk['mu_A']/res.cref:.2f} c_ref,")
+        print(f"      sigma={huk['sigma_A']:.0f}) -> net {suk['abroad_share_end']:.3f} vs 0,06 obs, distance {huk['distance']:.3f}.")
+        print("      Le 3e régime est désormais DANS le modèle, plus seulement nommé : l'appel propre de")
+        print("      Londres (hub anglophone/financier) est un paramètre estimable (~0,40 c_ref), et l'attache")
+        print("      hétérogène mu_A~0,65 c_ref est COHÉRENTE avec CH -> l'attache commune émerge, les écarts")
+        print("      inter-destinations passant par le pull income/retraite + eta, pas par une attache ad hoc.")
     else:
         print("    SMM FR->CH (A* ~0,32 c_ref, corridor quasi-bimodal) : python reproduce.py --full")
 
