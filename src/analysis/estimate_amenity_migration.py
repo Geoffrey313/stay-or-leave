@@ -55,7 +55,9 @@ def estimate(a_grid=None, kappa_grid=None, role_ratio=None) -> dict:
     col, pen, tax, house = load_cost_of_living(), load_pension(), load_capital_tax(), load_housing()
     cal, dyn = load_calibration(), load_dynamics()
     obs = load_observed()
-    a_grid = [0, 15000, 30000, 45000, 60000, 75000, 90000] if a_grid is None else a_grid
+    # grille A recentrée sur la région informative (émigration positive) : sous l'utilité
+    # commensurable, une aménité > ~0,4*c_ref éteint toute émigration (home trop attractif).
+    a_grid = [0, 2500, 5000, 7500, 10000, 12500] if a_grid is None else a_grid
     kappa_grid = [10000, 20000, 35000, 50000, 75000, 100000] if kappa_grid is None else kappa_grid
     best, surface = None, []
     for A in a_grid:

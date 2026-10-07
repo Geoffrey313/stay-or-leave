@@ -13,6 +13,7 @@ sigma_mkt_real,0.12,[I],"volatilité réelle du rendement, cohérente glide path
 risk_aversion,2.0,[I],"CRRA gamma, valeur standard littérature cycle de vie"
 career_years,40,[I],"entrée en activité ~25 ans à retraite ~65 ans"
 discount_rate_rho,0.02,[I],"actualisation du cycle de vie ; flux à rho, stocks terminaux ramenés à rho (pré-Bellman)"
+retirement_years,20,[I],"horizon de retraite pour la valeur terminale annuité par le même u (retraite ~65 à espérance ~85)"
 consumption_saturation_intl_usd,55000,[I],"cadre : surplus d'épargne nul sous saturation du panier (~100k de coût employeur)"
 subsistence_floor_intl_usd,5000,[I],"plancher de consommation ; le solde de kappa non couvert par W_f est prélevé sur la conso de l'année d'atterrissage jusqu'à ce plancher (migration jamais gratuite)"
 

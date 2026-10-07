@@ -114,7 +114,16 @@ def solve(origin: str, destination: str, col: Dict[str, CostOfLiving],
     role_ratio : prime à rôle comparable (destination/origine, réel, net du niveau, bloc D7). Si
     None, lu dans wage_premium.csv pour la destination (1.0 à défaut = ancien phi=1). Le patrimoine
     existant ne change pas de régime avec la résidence ; seuls le flux, l'impôt du capital sur W_f
-    et le routage des nouvelles cotisations changent. Rente terminale forfaitaire (4%) sur W_f+W_p.
+    et le routage des nouvelles cotisations changent.
+
+    Utilité commensurable (spéc. déclarée, cf. estimation-design.md) : la consommation entre en
+    RATIO c/c_ref (c_ref = consommation disponible médiane de l'origine), pour que la courbure CRRA
+    morde au lieu d'être plate. L'aménité A est un équivalent-consommation ajouté à domicile, donc un
+    estimande en fraction de c_ref. La valeur terminale n'entre PLUS en dollars quasi-linéaires : le
+    patrimoine est ANNUITÉ puis passé par le MÊME u, ce qui rend l'agent averse au risque PARTOUT
+    (fin de l'incohérence CRRA-flux / neutre-terminal) et fait enfin mordre l'ajustement de risque
+    r_mkt-0,5*gamma*sigma^2 sur W_f. L'annuité porte la scission risque : W_f au taux équivalent-
+    certain net d'impôt de résidence, W_p au taux sûr de répartition.
     """
     if role_ratio is None:
         wp = load_wage_premium()
@@ -133,6 +142,8 @@ def solve(origin: str, destination: str, col: Dict[str, CostOfLiving],
     # le choc permanent sigma_eta (D11) ; stationnaire = masses -> transversale de rang non dérivante
     Ptrans, pop_mass, p_move, sigma_impl = calibrate_position_transition(pos_o, real_o, dyn.sigma_eta)
     floor = cal.subsistence_floor_intl_usd
+    med = pos_o.index("P50") if "P50" in pos_o else npos // 2  # ancre de population médiane (pas npos//2)
+    cref = float(real_o[med])                                  # c_ref = conso disponible médiane origine
     Wf_g = np.linspace(0.0, Wf_max, nf)
     Wp_g = np.linspace(0.0, Wp_max, npp)
     ages = list(range(dyn.age_start, dyn.age_retire + 1))
@@ -142,10 +153,19 @@ def solve(origin: str, destination: str, col: Dict[str, CostOfLiving],
     return_cost = {t: dyn.lambda_return * dyn.kappa * (1 + dyn.return_cost_slope * (t - dyn.age_start) / span)
                    for t in ages}
 
-    # valeur terminale : CRRA d'une rente forfaitaire 4% sur le patrimoine total (W_f + W_p)
+    # valeur terminale ANNUITÉ par le MÊME u (utilité commensurable, aversion partout) :
+    # le patrimoine est converti en rente de retraite de niveau sur T_ret ans, W_f au taux
+    # équivalent-certain net d'impôt de résidence, W_p au taux sûr, puis u(rente/c_ref), somme
+    # actualisée sur l'horizon de retraite. L'aménité A persiste à domicile en retraite.
+    T_ret = cal.retirement_years
+    ann_util = sum(beta ** k for k in range(T_ret))           # facteur d'utilité actualisée de la retraite
+    annf = lambda r: (r / (1 - (1 + r) ** (-T_ret))) if abs(r) > 1e-9 else 1.0 / T_ret
     WF, WP = np.meshgrid(Wf_g, Wp_g, indexing="ij")
-    Vterm = _crra(0.04 * (WF + WP) + 1e-3, cal.risk_aversion)
-    V = {c: [Vterm.copy() for _ in range(npos)] for c in countries}
+    V = {}
+    for c in countries:
+        ret_flow = WF * annf(r_f[c]) + WP * annf(r_p) + (dyn.amenity if c == origin else 0.0)
+        Vterm_c = ann_util * _crra(np.maximum(ret_flow, floor) / cref, cal.risk_aversion)
+        V[c] = [Vterm_c.copy() for _ in range(npos)]
 
     policy_leave, policy_return = {}, {}
     for t in reversed(ages[:-1]):
@@ -160,7 +180,7 @@ def solve(origin: str, destination: str, col: Dict[str, CostOfLiving],
                 wp_n = Wp_g * (1 + r_p) + sp_c[ip]               # accumulation droit répartition
                 EV_stay = sum(Ptrans[ip, jp] * _interp2(V[c][jp], Wf_g, Wp_g, wf_n, wp_n)
                               for jp in range(npos))
-                stay_val = _crra(cons_c[ip] + A_here, cal.risk_aversion) + beta * EV_stay
+                stay_val = _crra((cons_c[ip] + A_here) / cref, cal.risk_aversion) + beta * EV_stay
                 best = stay_val
                 if t <= dyn.age_mig_max:
                     other = destination if c == origin else origin
@@ -175,10 +195,10 @@ def solve(origin: str, destination: str, col: Dict[str, CostOfLiving],
                     unfunded = cost - paid_wf                                          # solde -> conso
                     wf_m = (Wf_g - paid_wf) * (1 + r_f[other]) + sf_m[il]
                     wp_m = Wp_g * (1 + r_p) + sp_m[il]                                 # W_p vesté, inchangé
-                    cons_move = np.maximum(cons_m[il] + A_other - unfunded, floor)     # vecteur sur W_f
+                    cons_move = np.maximum(cons_m[il] + A_other - unfunded, floor)     # vecteur sur W_f ($)
                     EV_move = sum(Ptrans[il, jp] * _interp2(V[other][jp], Wf_g, Wp_g, wf_m, wp_m)
                                   for jp in range(npos))
-                    move_val = _crra(cons_move, cal.risk_aversion)[:, None] + beta * EV_move
+                    move_val = _crra(cons_move / cref, cal.risk_aversion)[:, None] + beta * EV_move
                     best = np.maximum(stay_val, move_val)
                     if c == origin:
                         leave_grid[ip] = move_val > stay_val
@@ -190,12 +210,11 @@ def solve(origin: str, destination: str, col: Dict[str, CostOfLiving],
         policy_return[t] = return_grid
 
     # (W_f, W_p) représentatifs par âge : accumulés le long de la position médiane en restant
-    mid = npos // 2
     Wpath, wf, wp2 = {}, 0.0, 0.0
     for t in ages:
         Wpath[t] = (wf, wp2)
-        wf = wf * (1 + r_f[origin]) + sf_o[mid]
-        wp2 = wp2 * (1 + r_p) + sp_o[mid]
+        wf = wf * (1 + r_f[origin]) + sf_o[med]
+        wp2 = wp2 * (1 + r_p) + sp_o[med]
     threshold, leave_idx, return_idx = {}, {}, {}
     for t in ages[:-1]:
         iwf = int(np.argmin(np.abs(Wf_g - Wpath[t][0])))
@@ -213,7 +232,7 @@ def solve(origin: str, destination: str, col: Dict[str, CostOfLiving],
                          origin=origin, destination=destination, age_mig_max=dyn.age_mig_max,
                          kappa=dyn.kappa, return_cost=return_cost, role_ratio=role_ratio,
                          land_o2d=o2d, land_d2o=d2o, pop_mass=pop_mass,
-                         p_move=p_move, sigma_impl=sigma_impl)
+                         p_move=p_move, sigma_impl=sigma_impl, cref=cref)
 
 
 class BellmanResult:
@@ -223,7 +242,7 @@ class BellmanResult:
                  policy_leave=None, policy_return=None, Wf_g=None, Wp_g=None, r_f=None, r_p=None,
                  flows=None, origin=None, destination=None, age_mig_max=None,
                  kappa=None, return_cost=None, role_ratio=None, land_o2d=None, land_d2o=None,
-                 pop_mass=None, p_move=None, sigma_impl=None):
+                 pop_mass=None, p_move=None, sigma_impl=None, cref=None):
         self.ages = ages
         self.positions = positions
         self.real = real
@@ -247,3 +266,4 @@ class BellmanResult:
         self.pop_mass = pop_mass            # masse de population par ancre (Voronoi) = stationnaire
         self.p_move = p_move                # mobilité de la proposition, calibrée sur sigma_eta
         self.sigma_impl = sigma_impl        # choc permanent implicite de la transition (vs D11)
+        self.cref = cref                    # consommation de référence (médiane dispo origine) pour u(c/c_ref)

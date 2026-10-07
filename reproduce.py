@@ -33,7 +33,8 @@ from src.engine.patrimony import lifetime_patrimony, stay_or_leave_lifetime
 from src.data.wage_premium import load_wage_premium, load_education_premium, load_occupation_premium
 from src.engine.wage_premium import translate_rank, break_even_role_ratio
 from src.engine.simulate import simulate_moments
-from src.analysis.solver_gate import check_gate, all_pass, format_gate
+from src.analysis.solver_gate import check_gate, all_pass, format_gate, amenity_identifiability
+from src.analysis.estimate_amenity_migration import estimate as estimate_amenity_migration
 
 SMIC_ANNUAL_COST = 28000  # borne de la zone de transferts (profil et pays de référence)
 
@@ -199,34 +200,42 @@ def main() -> None:
           f"lambda={dyn.lambda_return}, delta={dyn.return_cost_slope} ;")
     print(f"     migration bloquée > {dyn.age_mig_max} ans ; atterrissage en RANG net du niveau role_ratio="
           f"{res.role_ratio:.2f} (D7, PLUS phi=1) ;")
-    print(f"     coût de retour CROISSANT avec la durée à l'étranger ; équivalent-certain)")
+    print(f"     utilité commensurable u(c/c_ref), c_ref={res.cref:.0f} ; terminal annuité par le même u)")
     print(f"  {'âge':>5}  seuil de départ (position | revenu réel $ int.)")
     for t in range(dyn.age_start, dyn.age_mig_max + 1, 5):
         v = thr.get(t)
         print(f"  {t:>5}  {'rester à toute position' if v is None else f'{v[0]} | {v[1]:.0f}'}")
-    print("    Lecture : on part JEUNE (long horizon pour composer la bascule capitalisée), la migration")
-    print("    s'éteignant avec l'âge. Atterrissage en rang net du niveau (D7) : role_ratio=1 redonne phi=1 ;")
-    print("    le proxy éducation (0,97) ~ identité au grain des 8 percentiles ; la queue d'OCCUPATION")
-    print("    d'élite (role_ratio>1,1) décale vers le haut et étend le départ (commit du test du sommet).")
-    print(f"    Processus de revenu pondéré population : transition M-H vers les masses Voronoi, mobilité")
-    print(f"    p_move={res.p_move:.3f} calibrée pour sigma implicite={res.sigma_impl:.3f} = sigma_eta (D11).")
+    print("    Lecture : atterrissage en rang net du niveau (D7, role_ratio=1 redonne phi=1 ; proxy éducation")
+    print("    0,97 ~ identité, queue d'occupation d'élite >1,1 étend le départ). Processus de revenu pondéré")
+    print(f"    population : M-H vers masses Voronoi, p_move={res.p_move:.3f} -> sigma implicite={res.sigma_impl:.3f}")
+    print("    = sigma_eta (D11). Utilité commensurable : conso en ratio c/c_ref, aménité A en équivalent-conso")
+    print("    (estimande A/c_ref), terminal annuité (W_f au taux équivalent-certain net d'impôt, W_p au taux")
+    print("    sûr) passé par le MÊME u -> agent averse au risque PARTOUT, l'ajustement D5/D6 mord sur W_f.")
 
     # --- Porte d'acceptation du solveur : trois conditions avant lecture de la SMM (D13) ---
     sim = simulate_moments(res)
-    gate = check_gate(res, sim, dyn.sigma_eta)
+    sens = amenity_identifiability(col, pen, tax, house, cal, dyn)
+    gate = check_gate(res, sim, dyn.sigma_eta, amenity_spread=sens["spread"])
     print("\n=== PORTE DU SOLVEUR (critère d'arrêt avant SMM) ===")
     print(format_gate(gate))
+    byA = " ".join(f"A={a:.0f}:retour={r:.3f}" for a, r in sens["return_by_amenity"].items())
+    print(f"    balayage aménité -> {byA}")
     if all_pass(gate):
-        print("    => les trois conditions passent : la SMM se lit, kappa*/A* publiables.")
+        print("    => les trois conditions passent : la SMM se lit, kappa*/A* publiés.")
+        # --- SMM (D13) : estimation unique de A et kappa sur les flux, solveur validé ---
+        est = estimate_amenity_migration()
+        s = est["moments_sim"]
+        print("\n=== SMM (D13) : estimation de A et kappa sur les flux migratoires ===")
+        print(f"    A* = {est['best_A']:.0f} (A/c_ref = {est['best_A']/res.cref:.2f}) , kappa* = {est['best_kappa']:.0f}"
+              f"  (distance {est['distance']:.3f})")
+        print(f"    moments simulés : pic âge={s['peak_departure_age']}, stock net étranger={s['abroad_share_end']:.3f},")
+        print(f"      taux de retour={s['return_rate']:.3f} ; observés {est['moments_obs']}")
+        print("    Lecture : sous le proxy éducation (role_ratio~0,97) l'aménité tombe au plancher — les flux")
+        print("    ne réclament pas d'attachement positif, kappa porte l'ajustement ; l'aménité positive")
+        print("    apparaît sous la queue d'occupation d'élite, le régime des vrais partants (sensibilité en")
+        print("    module). Résidus déclarés : pic de départ et taux de retour non parfaits (moments grossiers).")
     else:
         print("    => une condition CASSE : estimation NON publiée (échec nommé, pas un soupçon).")
-        print("    Échec nommé : l'aménité A est INERTE. Les moments sont invariants à A et quasi à delta")
-        print("    (taux de retour ~0,93 quel que soit A). Cause : la CRRA u(c)=1-1/c sur une consommation")
-        print("    en dollars BRUTS est quasi plate au-dessus de quelques milliers ; u(c+A)-u(c) ~ 1e-5/an,")
-        print("    tandis que les écarts de patrimoine terminal pèsent ~1000x plus. La politique est pilotée")
-        print("    par l'accumulation terminale, l'aménité vit dans la zone plate de u et le moment de retour")
-        print("    ne l'identifie pas. Correctif = décision de spécification de l'utilité (où entre A, unité")
-        print("    de la consommation), pas un paramètre à bouger.")
 
 
 if __name__ == "__main__":
