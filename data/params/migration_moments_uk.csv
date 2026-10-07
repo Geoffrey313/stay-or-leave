@@ -1,0 +1,13 @@
+# Moments observés du flux migratoire FR -> ROYAUME-UNI (bloc D13), 3e corridor pour l'estimation
+# jointe (identifie attache commune vs appel destination-spécifique). GROSSIERS, flaggés [E], même
+# template que FR->US et FR->CH : RÉSIDENTS français au UK.
+# Sources : ONS recensement 2021 = 165 871 personnes NÉES en France résidant au UK (~163 517
+# citoyens FR) ; ONS 2020 estimait ~189 000 ; MEAE Registre 2023 = 140 286 inscrits (UK 3e rang
+# mondial, après CH 169 166 et US 150 587). Stocks des TROIS corridors du même ordre (~140-170k)
+# -> part de cadres émigrés ~0,06, posée IDENTIQUE aux deux autres : ainsi l'estimation jointe
+# identifie l'attache à partir des TIRS DIFFÉRENTS du modèle (bascule/surplus/niveau) matchant le
+# même flux, pas d'une différence de flux imposée. Pic ~30, retour 0,50, comme les autres. À AFFINER.
+moment,value,status,source
+peak_departure_age,30,[E],"expatriés FR ~30 ans (MEAE) ; Londres très jeune actifs"
+emigrant_share,0.06,[E],"165 871 nés en France au UK (ONS 2021) / 140 286 registre MEAE ; part cadres ordre de grandeur, = CH/US"
+return_rate,0.50,[E],"posé au même ordre que CH/US ; proximité/Brexit non modélisés ; à raffiner"

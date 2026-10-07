@@ -25,13 +25,14 @@ from src.analysis.estimate_amenity_heterogeneous import (precompute_net_by_ameni
                                                          _trunc_normal_weights)
 from src.analysis.estimate_amenity_migration import load_observed
 
-CORRIDORS = {"ch": "migration_moments_ch.csv", "us": "migration_moments.csv"}
+CORRIDORS = {"ch": "migration_moments_ch.csv", "us": "migration_moments.csv",
+             "uk": "migration_moments_uk.csv"}
 
 
 def _net_arrays(kappa=20000.0, a_grid=None):
     """net(A) par corridor sur une grille A commune (une résolution Bellman par (corridor, A))."""
     a_grid = np.array([0, 2500, 5000, 7500, 10000, 12500, 15000, 20000, 30000]) if a_grid is None else np.asarray(a_grid)
-    rr = {"ch": 1.0, "us": None}  # CH : story = bascule (role_ratio 1) ; US : proxy sourcé
+    rr = {"ch": 1.0, "us": None, "uk": None}  # CH bascule (role_ratio 1) ; US/UK proxy sourcé (0,97 / 0,789)
     net = {}
     for dest in CORRIDORS:
         by_a = precompute_net_by_amenity(dest, kappa, rr[dest], a_grid)
@@ -66,17 +67,21 @@ def estimate_joint(kappa=20000.0, mu_grid=None, sigma_grid=None, delta_grid=None
             if v1 is None or dist < v1["distance"]:
                 v1 = {"mu_A": float(mu), "sigma_A": float(sigma), "distance": dist, "net": nets}
 
-    # V2 : commune + delta_CH (delta_US = 0 en référence)
+    # V2 : commune + proximité par destination (delta_US = 0 en référence) ; delta_CH ET delta_UK.
+    # Le 3e corridor (UK) ajoute des contraintes -> identifie mieux l'attache commune vs spécifique.
     v2 = None
     for mu in mu_grid:
         for sigma in sigma_grid:
+            us_net = cohort_net("us", float(mu), float(sigma), 0.0)
             for dCH in delta_grid:
-                nets = {"us": cohort_net("us", float(mu), float(sigma), 0.0),
-                        "ch": cohort_net("ch", float(mu), float(sigma), float(dCH))}
-                dist = sum(reldist(d, nets[d]) for d in CORRIDORS)
-                if v2 is None or dist < v2["distance"]:
-                    v2 = {"mu_A": float(mu), "sigma_A": float(sigma), "delta_CH": float(dCH),
-                          "distance": dist, "net": nets}
+                ch_net = cohort_net("ch", float(mu), float(sigma), float(dCH))
+                for dUK in delta_grid:
+                    nets = {"us": us_net, "ch": ch_net,
+                            "uk": cohort_net("uk", float(mu), float(sigma), float(dUK))}
+                    dist = sum(reldist(d, nets[d]) for d in CORRIDORS)
+                    if v2 is None or dist < v2["distance"]:
+                        v2 = {"mu_A": float(mu), "sigma_A": float(sigma), "delta_CH": float(dCH),
+                              "delta_UK": float(dUK), "distance": dist, "net": nets}
     return {"obs": obs, "v1_common_only": v1, "v2_common_plus_proximity": v2, "kappa": kappa}
 
 
@@ -87,8 +92,8 @@ if __name__ == "__main__":
     print(f"Observé : net CH={o['ch']} US={o['us']}")
     v1 = r["v1_common_only"]
     print(f"\nV1 (attache COMMUNE seule) : mu_A={v1['mu_A']:.0f} ({v1['mu_A']/cref:.2f} c_ref) sigma_A={v1['sigma_A']:.0f}")
-    print(f"   -> net CH={v1['net']['ch']:.3f} US={v1['net']['us']:.3f} ; distance combinée {v1['distance']:.3f}")
+    print(f"   -> net CH={v1['net']['ch']:.3f} US={v1['net']['us']:.3f} UK={v1['net']['uk']:.3f} ; distance combinée {v1['distance']:.3f}")
     v2 = r["v2_common_plus_proximity"]
-    print(f"\nV2 (commune + proximité delta_CH, delta_US=0) : mu_A={v2['mu_A']:.0f} ({v2['mu_A']/cref:.2f} c_ref)"
-          f" sigma_A={v2['sigma_A']:.0f} delta_CH={v2['delta_CH']:.0f} ({v2['delta_CH']/cref:.2f} c_ref)")
-    print(f"   -> net CH={v2['net']['ch']:.3f} US={v2['net']['us']:.3f} ; distance combinée {v2['distance']:.3f}")
+    print(f"\nV2 (commune + proximité, delta_US=0) : mu_A={v2['mu_A']:.0f} ({v2['mu_A']/cref:.2f} c_ref)"
+          f" sigma_A={v2['sigma_A']:.0f} delta_CH={v2['delta_CH']/cref:.2f} c_ref delta_UK={v2['delta_UK']/cref:.2f} c_ref")
+    print(f"   -> net CH={v2['net']['ch']:.3f} US={v2['net']['us']:.3f} UK={v2['net']['uk']:.3f} ; distance {v2['distance']:.3f}")

@@ -365,20 +365,24 @@ def main(full: bool = False) -> None:
         # --- Estimation JOINTE multi-corridor : test de cohérence de l'attache ---
         j = estimate_joint()
         v1, v2 = j["v1_common_only"], j["v2_common_plus_proximity"]
-        print("\n    ESTIMATION JOINTE (test de cohérence : une attache à la France commune aux corridors ?) :")
+        print("\n    ESTIMATION JOINTE 3 corridors (une attache à la France commune aux corridors ?) :")
         print(f"      V1 attache COMMUNE seule : mu_A={v1['mu_A']/res.cref:.2f} c_ref sigma={v1['sigma_A']:.0f}")
-        print(f"         -> net CH={v1['net']['ch']:.3f} US={v1['net']['us']:.3f} (obs 0,06) ; distance {v1['distance']:.3f}")
-        print(f"      V2 commune + proximité delta_CH : mu_A={v2['mu_A']/res.cref:.2f} c_ref sigma={v2['sigma_A']:.0f}"
-              f" delta_CH={v2['delta_CH']/res.cref:.2f} c_ref")
-        print(f"         -> net CH={v2['net']['ch']:.3f} US={v2['net']['us']:.3f} ; distance {v2['distance']:.3f}")
-        print("      Lecture : V1 ÉCHOUE (distance ~0,9) : une attache commune qui fitte CH écrase le flux")
-        print("      US (~0,003) -> l'attache à la France n'est PAS universelle, tension nommée. V2 réconcilie")
-        print("      nettement mieux (distance ~0,16) avec une attache commune PETITE (~0,12 c_ref) + un terme")
-        print("      destination-spécifique CH substantiel (~0,16 c_ref = l'appel propre de la Suisse). MAIS")
-        print("      2 corridors -> mu et delta colinéaires, décomposition commune/spécifique non finement")
-        print("      identifiée (résidu 0,16) : un 3e corridor (FR->UK, pilier funded auto-enrolment) est")
-        print("      l'étape d'identification suivante. Résultat net : le maintien est en PARTIE une attache")
-        print("      à la France, en PARTIE un appel destination-spécifique ; pas l'un ou l'autre seul.")
+        print(f"         -> net CH={v1['net']['ch']:.3f} US={v1['net']['us']:.3f} UK={v1['net']['uk']:.3f} (obs 0,06) ; distance {v1['distance']:.3f}")
+        print(f"      V2 commune + proximité : mu_A={v2['mu_A']/res.cref:.2f} c_ref sigma={v2['sigma_A']:.0f}"
+              f" delta_CH={v2['delta_CH']/res.cref:.2f} delta_UK={v2['delta_UK']/res.cref:.2f} c_ref")
+        print(f"         -> net CH={v2['net']['ch']:.3f} US={v2['net']['us']:.3f} UK={v2['net']['uk']:.3f} ; distance {v2['distance']:.3f}")
+        print("      Lecture : V1 ÉCHOUE -> l'attache à la France n'est PAS universelle (une commune qui fitte")
+        print("      CH écrase US). V2 réconcilie CH et US (commune PETITE ~0,12 c_ref + terme CH ~0,16 c_ref =")
+        print("      appel propre de la Suisse). MAIS le 3e corridor révèle AUTRE chose que prévu : FR->UK est")
+        print("      INAJUSTABLE (net~0 à TOUT A, départ 0,77 mais retour ~1 -> churn ; role_ratio 0,789 fait")
+        print("      atterrir plus bas, pilier funded 8%<CH, avantage modeste -> le modèle ne RETIENT pas au UK)")
+        print("      alors que 140k Français y résident. Le modèle SOUS-PRÉDIT structurellement le UK : le flux")
+        print("      FR->UK vient d'un appel propre de Londres (hub anglophone/financier, libre circulation")
+        print("      pré-Brexit, réseaux) HORS du canal income/retraite du modèle. Trois régimes distincts :")
+        print("      CH sur-attire (bascule+niveau), US fitte (surplus d'élite), UK sous-retient (churn/appel")
+        print("      non-income). La décomposition fine attache commune vs spécifique reste non identifiée")
+        print("      (mu/delta colinéaires sur CH/US ; UK n'ajoute pas de contrainte mais une mécanique")
+        print("      manquante) -> données d'attachement externes requises, pas un corridor de plus.")
     else:
         print("    SMM FR->CH (A* ~0,32 c_ref, corridor quasi-bimodal) : python reproduce.py --full")
 
