@@ -240,12 +240,15 @@ def main(full: bool = False) -> None:
                 tag = " [A EN BORNE BASSE]" if p["A_at_lower_bound"] else (" [A en borne haute]" if p["A_at_upper_bound"] else "")
                 print(f"  {p['role_ratio']:>10.2f} {p['A']/res.cref:>9.2f} {p['A']:>8.0f} {p['kappa']:>11.0f}"
                       f" {p['distance']:>6.3f}  {p['kind']}{tag}")
-            print("    Lecture : flag levé. La borne US sourcée (1,07-1,27) STRADDLE le seuil A>0 : sur la")
-            print("    MOYENNE d'élite (1,09) A reste en borne basse, sur la MÉDIANE (1,27) A>0 (~0,24 c_ref).")
-            print("    Le signe de A chez les partants d'élite US n'est plus suspendu à un posé : il est borné")
-            print("    par de la donnée et se joue au choix médiane/moyenne. Le UK sourcé est <= ~1 -> A au")
-            print("    plancher : l'aménité positive est un phénomène US, pas UK. Résidu : tech/finance partagent")
-            print("    le comparateur ISCO-2 (SES keyless 1 chiffre) ; dirigeants = concept propre.")
+            print("    Lecture : flag levé, mais HIÉRARCHIE de robustesse. Estimation CENTRALE = A nul /")
+            print("    proche de zéro (borne basse au proxy 0,97 et à la moyenne d'élite 1,09). A>0 (~0,24")
+            print("    c_ref, à la médiane 1,27) est le BORD OPTIMISTE, PAS une moitié co-égale : il dépend")
+            print("    du choix de la médiane ET d'un pont de source unique US/FR (Eurostat SES 2018 ISCO ->")
+            print("    BLS OEWS 2023 SOC, inter-source/année/classif, qui joue EN FAVEUR). Le UK est le cell")
+            print("    PROPRE (FR et UK même source/année/classif) : role_ratio <= ~1 (dirigeants 0,85) ->")
+            print("    A au plancher, résultat SOLIDE. Énoncé : l'aménité est nulle/proche de zéro ; un")
+            print("    attachement positif n'apparaît qu'à la marge, vers les US, sur les médianes et via un")
+            print("    pont favorable ; absent vers le UK. Résidu : tech/finance en proxy ISCO-2 (SES keyless).")
         else:
             # --- Point SOURCÉ (défaut rapide) : SMM au role_ratio du proxy éducation ---
             est = estimate_amenity()
