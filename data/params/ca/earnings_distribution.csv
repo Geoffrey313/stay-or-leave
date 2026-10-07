@@ -1,0 +1,16 @@
+# Distribution de revenu CANADA, stockée localement. ATTENTION — CAVEAT DE COMPARABILITÉ :
+# ce sont des percentiles de REVENU TOTAL des individus 15+ (recensement 2021, année revenu 2020),
+# qui INCLUENT retraités, temps partiel et non-salariés -> médiane 39 500 CAD, NETTEMENT SOUS la
+# médiane de revenu d'EMPLOI plein-temps plein-an (~55-65k CAD). Ce N'EST PAS comparable aux ancres
+# salariales EQTP/LSE/OEWS de FR/US/UK/CH. NE PAS l'utiliser tel quel pour la cascade fine CA
+# (violerait le palier « même base » d'US-01). À REMPLACER par StatCan table 11-10-0239 (revenu
+# d'emploi par percentile) avant tout build dynamique FR->CA. Stocké ici pour trace + reconstruction.
+# Source : StatCan recensement 2021 table 98-10-0064 (bandes 5k interpolées).
+percentile,total_income_cad_2020,status,source
+P10,7700,[E],"revenu TOTAL individus 15+ (census 2021) ; inclut non-salariés -> non comparable emploi"
+P25,21200,[E],"idem"
+P50,39500,[E],"médiane revenu total ; médiane EMPLOI plein-temps ~55-65k (bien plus haut)"
+P75,67000,[E],"idem"
+P90,103000,[E],"idem"
+P95,139100,[E],"idem"
+# Repère hors-table : médiane EMPLOI plein-temps plein-an ~55-65k CAD (StatCan, à préciser via 11-10-0239).

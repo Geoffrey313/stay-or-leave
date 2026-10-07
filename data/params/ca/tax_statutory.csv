@@ -1,0 +1,24 @@
+# Barème fiscal statutaire CANADA (célibataire, 2024), province de référence ONTARIO. Stocké
+# localement pour le build futur de la cascade fine CA (quand la distribution d'EMPLOI sera sourcée).
+# Deux blocs : brackets marginaux (fédéral + Ontario) et taux EFFECTIFS combinés single (féd+ON,
+# crédits BPA + surtaxe Ontario appliqués ; Health Premium ON et CPP/EI exclus). Monnaie CAD.
+# BPA fédéral 2024 = 15705 (dégressif 173205->246752) ; BPA Ontario = 12399. Surtaxe Ontario :
+# +20% de l'impôt ON >5554, +36% >7108 (cumulatif). Ontario Health Premium jusqu'à 900/an séparée.
+# Sources : CRA (canada.ca), taxtips.ca/taxrates/on.htm, EY/KPMG rate cards 2024.
+kind,lower,upper,rate_or_value,note
+fed_bracket,0,55867,0.15,"fédéral marginal"
+fed_bracket,55867,111733,0.205,"fédéral marginal"
+fed_bracket,111733,173205,0.26,"fédéral marginal"
+fed_bracket,173205,246752,0.29,"fédéral marginal"
+fed_bracket,246752,100000000,0.33,"fédéral marginal"
+on_bracket,0,51446,0.0505,"Ontario marginal"
+on_bracket,51446,102894,0.0915,"Ontario marginal"
+on_bracket,102894,150000,0.1116,"Ontario marginal"
+on_bracket,150000,220000,0.1216,"Ontario marginal"
+on_bracket,220000,100000000,0.1316,"Ontario marginal"
+bpa_federal,0,0,15705,"basic personal amount fédéral 2024 (dégressif au-delà de 173205)"
+bpa_ontario,0,0,12399,"basic personal amount Ontario 2024"
+eff_combined,0,50000,0.141,"taux effectif moyen combiné féd+ON, single (Health Premium/CPP/EI exclus)"
+eff_combined,0,80000,0.194,"idem"
+eff_combined,0,120000,0.245,"idem"
+eff_combined,0,200000,0.328,"idem"
