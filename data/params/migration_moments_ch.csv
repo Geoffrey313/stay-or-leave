@@ -1,0 +1,14 @@
+# Moments observés du flux migratoire FR -> SUISSE (bloc D13), pour la SMM du corridor CH.
+# GROSSIERS et flaggés [E], comme FR->US : sources agrégées, RÉSIDENTS (pas frontaliers, qui vivent
+# en France et sont hors périmètre du modèle). Le NIVEAU (emigrant_share) épingle A sharpement, vu
+# la quasi-bimodalité du corridor CH (cf. estimation-design.md / reproduce US-01).
+# Sources : OFS/CHstat 2023 = 163 670 Français RÉSIDENTS permanents en Suisse (+57% en 11 ans) ;
+# MEAE Registre des Français établis hors de France = ~172 000 (Suisse #1 mondial, inscription
+# volontaire donc partielle). Stock du même ordre que les Français aux US -> part de cadres émigrés
+# ~0,06, même ordre de grandeur que le corridor US (comparabilité des stocks). Structure d'âge des
+# expatriés français : 51% entre 25 et 60 ans -> pic de départ ~30 ans. Taux de retour posé au même
+# ordre que US (0,50), à raffiner (la proximité CH pourrait l'augmenter). À AFFINER.
+moment,value,status,source
+peak_departure_age,30,[E],"expatriés FR 51% 25-60 ans ; départs de cadres ~30 ans (MEAE)"
+emigrant_share,0.06,[E],"163 670 résidents FR en CH (OFS 2023) / ~172k registre MEAE ; part cadres ordre de grandeur, = corridor US"
+return_rate,0.50,[E],"posé au même ordre que US ; proximité CH pourrait augmenter le retour ; à raffiner"

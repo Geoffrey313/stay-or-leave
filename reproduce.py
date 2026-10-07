@@ -332,7 +332,22 @@ def main(full: bool = False) -> None:
     print("    L'aménité A est donc SHARPEMENT identifiée par le NIVEAU du flux FR->CH, et GRANDE (il faut")
     print("    une forte attache au pays pour expliquer que tout le monde n'émigre pas vers une Suisse plus")
     print("    riche) -> l'OPPOSÉ des US (A~0, avantage via le surplus de l'élite). Thèse destination-")
-    print("    dépendante confirmée. SMM CH complète = en attente de moments de flux FR->CH (donnée à venir).")
+    print("    dépendante confirmée.")
+    if full:
+        est_ch = estimate_amenity(destination="ch", moments_csv="migration_moments_ch.csv")
+        sc = est_ch["moments_sim"]
+        print("\n    SMM FR->CH (moments OFS/MEAE : 163 670 résidents FR en CH, part cadres ~0,06 [E]) :")
+        print(f"      A* = {est_ch['best_A']:.0f} (A/c_ref = {est_ch['best_A']/res.cref:.2f}) , kappa* = {est_ch['best_kappa']:.0f}"
+              f"  (distance {est_ch['distance']:.3f}) ; net simulé {sc['abroad_share_end']:.3f} vs 0,06 obs")
+        print("      Lecture : A* ~ 0,32 c_ref, soit la MÊME magnitude que l'élite US-médiane (0,32) mais")
+        print("      par un mécanisme différent (bascule+niveau CH vs prime salariale US). L'attache au pays")
+        print("      ~0,3 c_ref se révèle dès qu'une destination tire fort (CH bascule OU US élite), masquée")
+        print("      (plancher) quand le tir est faible (US proxy, répartition->répartition). MAIS corridor")
+        print("      CH QUASI-BIMODAL : le net saute de ~1,0 à ~0,02 sans passer par 0,06 -> le modèle à")
+        print("      agent représentatif ENCADRE mais n'atteint pas l'intermédiaire ; les 6% observés exigent")
+        print("      une HÉTÉROGÉNÉITÉ d'attachement (distribution de A) non modélisée, travaux futurs.")
+    else:
+        print("    SMM FR->CH (A* ~0,32 c_ref, corridor quasi-bimodal) : python reproduce.py --full")
 
 
 if __name__ == "__main__":

@@ -26,8 +26,8 @@ from src.engine.bellman import solve
 from src.engine.simulate import simulate_moments
 
 
-def load_observed() -> Dict[str, float]:
-    with param_file("migration_moments.csv").open(newline="") as fh:
+def load_observed(moments_csv: str = "migration_moments.csv") -> Dict[str, float]:
+    with param_file(moments_csv).open(newline="") as fh:
         return {r["moment"]: float(r["value"])
                 for r in csv.DictReader(filter(lambda l: not l.startswith("#"), fh))}
 
@@ -45,25 +45,27 @@ def _distance(sim: dict, obs: Dict[str, float]) -> float:
     return d
 
 
-def estimate(a_grid=None, kappa_grid=None, role_ratio=None) -> dict:
-    """Recherche sur grille (A, kappa) ; renvoie le meilleur et la surface.
+def estimate(a_grid=None, kappa_grid=None, role_ratio=None,
+             destination="us", moments_csv="migration_moments.csv") -> dict:
+    """Recherche sur grille (A, kappa) pour le corridor FR -> destination ; meilleur + surface.
 
-    role_ratio : prime à rôle comparable D7 injectée dans l'atterrissage en rang. None = valeur
-    sourcée (proxy éducation, wage_premium.csv) ; passer une valeur de queue (occupation d'élite)
-    pour la sensibilité du régime où vivent les partants réels.
+    role_ratio : prime à rôle comparable D7 (atterrissage en rang) ; None = sourcé (wage_premium).
+    destination / moments_csv : corridor estimé et ses moments de flux observés. Le corridor CH
+    (bascule obligatoire) est quasi-bimodal en A, donc une grille A ÉLARGIE est nécessaire (A grand).
     """
     col, pen, tax, house = load_cost_of_living(), load_pension(), load_capital_tax(), load_housing()
     cal, dyn = load_calibration(), load_dynamics()
-    obs = load_observed()
-    # grille A recentrée sur la région informative (émigration positive) : sous l'utilité
-    # commensurable, une aménité > ~0,4*c_ref éteint toute émigration (home trop attractif).
-    a_grid = [0, 2500, 5000, 7500, 10000, 12500] if a_grid is None else a_grid
+    obs = load_observed(moments_csv)
+    # grille A : région informative. US -> A petit (surplus d'élite) ; CH -> A grand (bascule de
+    # niveau uniforme, quasi-bimodale) -> on élargit pour couvrir le pas.
+    a_grid = ([0, 2500, 5000, 7500, 10000, 12500] if destination != "ch"
+              else [0, 5000, 10000, 12000, 13000, 14000, 15000, 20000, 30000]) if a_grid is None else a_grid
     kappa_grid = [10000, 20000, 35000, 50000, 75000, 100000] if kappa_grid is None else kappa_grid
     best, surface = None, []
     for A in a_grid:
         for kap in kappa_grid:
             d = dyn.model_copy(update={"amenity": float(A), "kappa": float(kap)})
-            res = solve("fr", "us", col, pen, tax, house, cal, d, role_ratio=role_ratio)
+            res = solve("fr", destination, col, pen, tax, house, cal, d, role_ratio=role_ratio)
             sim = simulate_moments(res)
             dist = _distance(sim, obs)
             surface.append((A, kap, dist, sim["peak_departure_age"], sim["emigrant_share"], sim["return_rate"]))
