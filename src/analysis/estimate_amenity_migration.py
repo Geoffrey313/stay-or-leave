@@ -32,16 +32,33 @@ def load_observed(moments_csv: str = "migration_moments.csv") -> Dict[str, float
                 for r in csv.DictReader(filter(lambda l: not l.startswith("#"), fh))}
 
 
+# Matrice de pondération DÉCLARÉE du vecteur de moments (diagonale). La part d'émigrés = stock net à
+# l'étranger (bien défini) et le pic d'âge portent le poids plein ; le taux de retour est peu fiable
+# en premier passage (churn au W représentatif) -> poids réduit. Diagonale, pas efficace : aucune
+# covariance de moments défendable sur des moments agrégés [E] ; on la déclare plutôt que de la feindre.
+WEIGHTS = {"peak_departure_age": 1.0, "emigrant_share": 1.0, "return_rate": 0.25}
+
+# Bandes observées DÉCLARÉES (tolérance absolue par moment), reflétant leur nature grossière [E] :
+# elles servent au jeu de confiance robuste à l'identification (bloc SL-US-04, smm_inference.py).
+BANDS = {"emigrant_share": 0.02, "peak_departure_age": 5.0, "return_rate": 0.25}
+
+
+def _sim_moment_map(sim: dict) -> Dict[str, float]:
+    """Moments simulés remis aux clés des moments observés (part d'émigrés = stock net à l'étranger)."""
+    return {"emigrant_share": sim["abroad_share_end"],
+            "peak_departure_age": sim["peak_departure_age"],
+            "return_rate": sim["return_rate"]}
+
+
 def _distance(sim: dict, obs: Dict[str, float]) -> float:
-    # Part d'émigrés = STOCK NET à l'étranger (bien défini) ; le taux de retour est peu fiable
-    # en premier passage (churn de la simulation au W représentatif) -> poids réduit.
+    """Distance de moments pondérée (matrice diagonale WEIGHTS déclarée), écarts relatifs au carré."""
+    m = _sim_moment_map(sim)
     d = 0.0
-    if sim["peak_departure_age"] is not None:
-        d += ((sim["peak_departure_age"] - obs["peak_departure_age"]) / obs["peak_departure_age"]) ** 2
-    else:
-        d += 1.0
-    d += ((sim["abroad_share_end"] - obs["emigrant_share"]) / max(obs["emigrant_share"], 1e-6)) ** 2
-    d += 0.25 * ((sim["return_rate"] - obs["return_rate"]) / max(obs["return_rate"], 1e-6)) ** 2
+    for key, w in WEIGHTS.items():
+        if key == "peak_departure_age" and m[key] is None:
+            d += w * 1.0
+            continue
+        d += w * ((m[key] - obs[key]) / max(abs(obs[key]), 1e-6)) ** 2
     return d
 
 

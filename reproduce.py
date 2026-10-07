@@ -45,6 +45,7 @@ from src.analysis.estimate_amenity_migration import estimate as estimate_amenity
 from src.analysis.estimate_amenity_heterogeneous import estimate_heterogeneous
 from src.analysis.estimate_amenity_joint import estimate_joint
 from src.analysis.sensitivity import sensitivity_sweep, PARAMS
+from src.analysis.smm_inference import confidence_set, confidence_set_heterogeneous
 from src.figures.export import export_all
 
 SMIC_ANNUAL_COST = 28000  # borne de la zone de transferts (profil et pays de référence)
@@ -447,6 +448,22 @@ def main(full: bool = False) -> None:
         print("    Lecture : l'ORDRE du verdict (élite > headline, propriété retient) tient à r_mkt et,")
         print("    en ordre, à gamma ; mais les NIVEAUX dépendent de gamma (le match aux ~6% repose sur")
         print("    gamma~2), et la marge de rétention s'amenuise à saturation élevée (65k).")
+
+        # --- Inférence SMM (SL-US-04) : jeux de confiance robustes à l'identification ---
+        print("\n=== INFÉRENCE SMM (jeux de confiance robustes à l'identification) ===")
+        cs_us = confidence_set(destination="us")                 # prime sourcée, agent représentatif
+        print(f"  FR->US prime sourcée (représentatif) : A*={cs_us['best_A']:.0f} kappa*={cs_us['best_kappa']:.0f}"
+              f" ; jeu A dans {cs_us['A_range']} kappa dans {cs_us['kappa_range']} ; coin A=0 dans le jeu = {cs_us['corner_in_set']}")
+        csh_ch = confidence_set_heterogeneous(destination="ch", moments_csv="migration_moments_ch.csv")
+        print(f"  FR->CH hétérogène : mu_A*={csh_ch['best_mu']:.0f} ({csh_ch['best_mu']/res.cref:.2f} c_ref)"
+              f" sigma_A*={csh_ch['best_sigma']:.0f} ; jeu mu dans {csh_ch['mu_range']} sigma dans {csh_ch['sigma_range']}")
+        csh_uk = confidence_set_heterogeneous(destination="uk", moments_csv="migration_moments_uk.csv", dest_appeal=12500.0)
+        print(f"  FR->UK hétérogène (eta=0,40 c_ref) : mu_A*={csh_uk['best_mu']:.0f} ({csh_uk['best_mu']/res.cref:.2f} c_ref)"
+              f" sigma_A*={csh_uk['best_sigma']:.0f} ; jeu mu dans {csh_uk['mu_range']} sigma dans {csh_uk['sigma_range']}")
+        print("    Lecture : sous la prime sourcée, le jeu de confiance épingle A au COIN (A=0) -> les flux")
+        print("    n'exigent pas d'attachement positif ; A>0 n'apparaît qu'à la prime d'élite non sourcée et")
+        print("    n'a pas de jeu de confiance représentatif (point 1). Pour CH et UK, l'attachement hétérogène")
+        print("    est identifié (mu_A grand, ~0,65 c_ref) ; le UK reste CONDITIONNEL à eta (point 2).")
 
 
 if __name__ == "__main__":
