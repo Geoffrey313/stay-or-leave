@@ -6,7 +6,7 @@
 # Statut par valeur : [S] sourcé, [E] estimé/dérivé, [I] posé. Classification du cadre (Partie C) :
 # répartition FR/DE/IT/ES/JP ; capitalisation US/UK/CA ; MIXTE CH (1er pilier AVS + 2e pilier LPP).
 country,payg_share,funded_share,status,source
-fr,0.196,0.0,[E],"répartition pure ; OCDE Pensions at a Glance 2024 27,8% brut / ~1,42 coût"
-us,0.0,0.124,[S],"capitalisation ; OASDI 12,4% (SSA) + 401k au-dessus"
-uk,0.0,0.080,[E],"capitalisation ; auto-enrolment 8% DC (gov.uk)"
+fr,0.196,0.0,[E],"répartition pure ; OCDE Pensions at a Glance 2024 27,8% brut / ~1,42 coût ; PER volontaire -> surplus D6"
+us,0.124,0.0,[S],"CORRECTION mis-routage : OASDI 12,4% est de la RÉPARTITION (SSA, PAYG) -> r_rep, PAS r_mkt ; 401k VOLONTAIRE déjà capté dans le surplus (D6, r_mkt) -> funded 0 (sinon double-compte)"
+uk,0.080,0.080,[E],"capitalisation auto-enrolment 8% DC (gov.uk) ; + pension d'État PAYG (National Insurance) payg~0,08 [E] À SOURCER (OCDE Pensions at a Glance UK) ; aujourd'hui omise"
 ch,0.094,0.073,[E],"MIXTE : AVS/AI/APG répartition 10,6% brut (~0,094 du coût) ; BVG capitalisé ~12,5% du salaire coordonné age-moyen (~0,073 du coût, cap déduction de coordination) ; OFAS/estv 2024"
