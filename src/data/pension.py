@@ -15,25 +15,36 @@ from src.common.paths import param_file
 
 
 class PensionParams(BaseModel):
-    """Cotisation retraite d'un pays, SCINDÉE par régime (part du coût employeur) :
-    part RÉPARTITION (-> droit W_p, rendement r_rep) et part CAPITALISÉE (-> pot W_f, r_mkt).
-    Un pays à régime unique est le cas particulier où une des deux parts est nulle (FR répartition
-    pure, US/UK capitalisation pure) ; un pays mixte porte les deux (CH : AVS répartition + BVG
-    capitalisé). Le routage du split est fait par la Bellman à deux accumulateurs."""
+    """Règle retraite CAPÉE d'un pays (bloc D5), depuis des paramètres statutaires sourcés. La
+    cotisation n'est PAS une part plate du coût (fausse au sommet de tout système plafonné) : elle
+    se calcule par position via `split`. Pilier RÉPARTITION : taux sur le brut, assiette plafonnée à
+    payg_base_cap, DROIT (W_p, r_rep) plafonné à payg_benefit_cap (au-delà = redistribution,
+    rendement ~0). Pilier CAPITALISÉ : taux sur la tranche [funded_floor, funded_cap] du brut
+    (-> W_f, r_mkt) ; au-delà = surobligatoire volontaire = surplus (D6), jamais re-compté."""
     country: str
-    payg_share: NonNegativeFloat     # cotisation répartition / coût employeur
-    funded_share: NonNegativeFloat   # cotisation capitalisée / coût employeur
+    employer_ssc_rate: NonNegativeFloat   # charges patronales / brut : brut = cost/(1+taux)
+    payg_rate: NonNegativeFloat
+    payg_base_cap: NonNegativeFloat
+    payg_benefit_cap: NonNegativeFloat
+    funded_rate: NonNegativeFloat
+    funded_floor: NonNegativeFloat
+    funded_cap: NonNegativeFloat
 
-    @property
-    def contrib_share_cost(self) -> float:
-        """Cotisation retraite totale (répartition + capitalisée), pour compat statique."""
-        return self.payg_share + self.funded_share
+    def split(self, cost_employer: float, ppp: float) -> tuple[float, float]:
+        """(cotisation vers W_p répartition, vers W_f capitalisé), en $ int, pour une position de
+        coût employeur donné. Le brut est dérivé du coût ; les plafonds mordent au sommet."""
+        gross = cost_employer / (1.0 + self.employer_ssc_rate)
+        payg_to_wp = self.payg_rate * min(gross, self.payg_benefit_cap) / ppp
+        coord = min(max(gross - self.funded_floor, 0.0),
+                    max(self.funded_cap - self.funded_floor, 0.0))
+        funded_to_wf = self.funded_rate * coord / ppp
+        return payg_to_wp, funded_to_wf
 
     @property
     def regime(self) -> str:
-        """Régime DOMINANT (compat avec le switch statique binaire D5) : la vraie scission vit
-        dans payg_share/funded_share et n'est utilisée que par le dynamique."""
-        return "funded" if self.funded_share > self.payg_share else "payg"
+        """Régime DOMINANT par taux (compat du switch statique binaire D5) ; la vraie règle capée
+        vit dans `split` et n'est utilisée que par le dynamique et le patrimoine statique."""
+        return "funded" if self.funded_rate > self.payg_rate else "payg"
 
 
 class Calibration(BaseModel):
@@ -64,10 +75,12 @@ def _read(path):
 
 
 def load_pension() -> Dict[str, PensionParams]:
-    rows = _read(param_file("pension.csv"))
-    return {r["country"]: PensionParams(country=r["country"],
-                                        payg_share=float(r["payg_share"]),
-                                        funded_share=float(r["funded_share"]))
+    rows = _read(param_file("pension_rules.csv"))
+    return {r["country"]: PensionParams(
+        country=r["country"], employer_ssc_rate=float(r["employer_ssc_rate"]),
+        payg_rate=float(r["payg_rate"]), payg_base_cap=float(r["payg_base_cap"]),
+        payg_benefit_cap=float(r["payg_benefit_cap"]), funded_rate=float(r["funded_rate"]),
+        funded_floor=float(r["funded_floor"]), funded_cap=float(r["funded_cap"]))
             for r in rows}
 
 

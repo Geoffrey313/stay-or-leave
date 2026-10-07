@@ -57,15 +57,16 @@ def pension_switch(origin_points: List[CascadePoint], origin: PensionParams,
     Le brut (r_mkt) est ce qui remonte dans Pi, accompagné de sigma pour que la Bellman fasse
     l'ajustement de risque une fois ; l'EC illustratif montre l'ordre de grandeur de l'écart.
     """
-    funded = origin.regime == "payg" and destination.regime == "funded"
+    is_switch = origin.regime == "payg" and destination.regime == "funded"
     w_rep = fv_annuity_factor(cal.r_rep_real, cal.career_years)              # sans risque
     w_mkt = fv_annuity_factor(cal.r_mkt_real, cal.career_years)              # espérance risquée
     w_ce = fv_annuity_factor(cal.r_mkt_certainty_equivalent, cal.career_years)  # équivalent-certain
     out: List[PensionSwitch] = []
     for p in origin_points:
-        contrib = origin.contrib_share_cost * p.cost_employer
-        gross = contrib * (w_mkt - w_rep) if funded else 0.0
-        ce = contrib * (w_ce - w_rep) if funded else 0.0
+        payg_loc, funded_loc = origin.split(p.cost_employer, 1.0)  # capé per-position, monnaie locale
+        contrib = payg_loc + funded_loc
+        gross = contrib * (w_mkt - w_rep) if is_switch else 0.0
+        ce = contrib * (w_ce - w_rep) if is_switch else 0.0
         out.append(PensionSwitch(
             profile=p.profile, position=p.position,
             origin=origin.country, destination=destination.country,

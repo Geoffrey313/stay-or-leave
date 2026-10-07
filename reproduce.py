@@ -240,10 +240,11 @@ def main(full: bool = False) -> None:
                 tag = " [A EN BORNE BASSE]" if p["A_at_lower_bound"] else (" [A en borne haute]" if p["A_at_upper_bound"] else "")
                 print(f"  {p['role_ratio']:>10.2f} {p['A']/res.cref:>9.2f} {p['A']:>8.0f} {p['kappa']:>11.0f}"
                       f" {p['distance']:>6.3f}  {p['kind']}{tag}")
-            print("    Lecture : flag levé, mais HIÉRARCHIE de robustesse. Estimation CENTRALE = A PETIT")
-            print("    (~0,08 c_ref au proxy 0,97 et à la moyenne d'élite 1,09 ; plus au plancher depuis la")
-            print("    correction du mis-routage OASDI US). A plus grand (~0,32 c_ref, médiane 1,27) est le")
-            print("    BORD OPTIMISTE, PAS une moitié co-égale : il dépend")
+            print("    Lecture : flag levé, mais HIÉRARCHIE de robustesse. Estimation CENTRALE = A au")
+            print("    PLANCHER (0 au proxy 0,97 et à la moyenne d'élite 1,09) : la formule capée restaure le")
+            print("    plancher (le plafond OASDI amplifie l'avantage capitalisé US au sommet, via le surplus,")
+            print("    ce qui compense). A>0 (~0,32 c_ref, médiane 1,27) est le BORD OPTIMISTE, PAS une")
+            print("    moitié co-égale : il dépend")
             print("    du choix de la médiane ET d'un pont de source unique US/FR (Eurostat SES 2018 ISCO ->")
             print("    BLS OEWS 2023 SOC, inter-source/année/classif, qui joue EN FAVEUR). Le UK est le cell")
             print("    PROPRE (FR et UK même source/année/classif) : role_ratio <= ~1 (dirigeants 0,85) ->")
@@ -260,9 +261,9 @@ def main(full: bool = False) -> None:
                   f"kappa* = {est['best_kappa']:.0f}  (distance {est['distance']:.3f})")
             print(f"    moments : pic={s['peak_departure_age']}, net étranger={s['abroad_share_end']:.3f},"
                   f" retour={s['return_rate']:.3f} ; observés {est['moments_obs']}")
-            print("    A central PETIT (~0,08 c_ref au proxy, plus au plancher depuis la correction du mis-")
-            print("    routage OASDI US : l'avantage funded US artificiel retiré est compensé par un peu")
-            print("    d'aménité). Courbe A*(role_ratio), bord optimiste à l'élite : python reproduce.py --full")
+            print("    A central au PLANCHER sous la formule retraite capée (plafond OASDI US -> l'élite")
+            print("    s'appuie sur le surplus r_mkt, avantage capitalisé amplifié au sommet). Le bord")
+            print("    optimiste A>0 vit à l'élite US-médiane : python reproduce.py --full")
         print("    Résidus déclarés : pic de départ et taux de retour non parfaits (moments grossiers D13).")
     else:
         print("    => une condition CASSE : estimation NON publiée (échec nommé, pas un soupçon).")

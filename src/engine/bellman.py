@@ -71,8 +71,7 @@ def _country_flows(country: str, col, pension, tax, housing, cal):
         real_pp = p.disposable_year / ppp
         after = max(0.0, real_pp - rent)
         surplus = max(0.0, after - sat)
-        contrib_payg = pp.payg_share * p.cost_employer / ppp     # -> droit répartition (r_rep)
-        contrib_funded = pp.funded_share * p.cost_employer / ppp  # -> pot funded (r_mkt)
+        contrib_payg, contrib_funded = pp.split(p.cost_employer, ppp)  # formule capée per-position
         cons.append(min(after, sat))
         save_f.append(surplus + contrib_funded)
         save_p.append(contrib_payg)
@@ -134,8 +133,9 @@ def _country_primitives(c, col, pension):
     ppp = col[c].ppp_aic_local_per_intl_usd
     pp = pension[c]
     real = np.array([p.disposable_year / ppp for p in pts])
-    contrib_payg = np.array([pp.payg_share * p.cost_employer / ppp for p in pts])
-    contrib_funded = np.array([pp.funded_share * p.cost_employer / ppp for p in pts])
+    splits = [pp.split(p.cost_employer, ppp) for p in pts]            # formule capée per-position
+    contrib_payg = np.array([s[0] for s in splits])
+    contrib_funded = np.array([s[1] for s in splits])
     pos = [p.position for p in pts]
     return pos, real, contrib_payg, contrib_funded, ppp
 

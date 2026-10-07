@@ -1,0 +1,23 @@
+# Retraite (bloc D5), FORMULE CAPÉE per-position (remplace les parts plates, fausses au sommet).
+# Le flat-share sur-crédite le PAYG des hauts revenus dans TOUT système plafonné : OASDI US plafonné
+# à la wage base, régime général FR plafonné au PASS, AVS CH à prestation plafonnée. La formule
+# pension_split(cost_employer, ppp, params) calcule, par position, la part répartition (-> droit W_p,
+# r_rep) et la part capitalisée (-> pot W_f, r_mkt) depuis ces paramètres statutaires sourcés. θ
+# (coût/disposable) reste un objet distinct : aucun montant pension pré-baké dans la cascade.
+#
+# Champs (monnaie locale du pays) :
+#   employer_ssc_rate     : charges patronales / brut, pour dériver le brut = cost_employer/(1+taux).
+#   payg_rate             : taux de cotisation répartition, du BRUT.
+#   payg_base_cap         : plafond d'ASSIETTE de cotisation (grand = non plafonné).
+#   payg_benefit_cap      : plafond de salaire au-delà duquel le DROIT W_p ne croît plus ; la
+#                           cotisation entre benefit_cap et base_cap est redistributive (rendement ~0,
+#                           NON routée vers W_p). W_p construit sur payg_rate*min(brut, benefit_cap).
+#   funded_rate           : taux capitalisé, de la TRANCHE [funded_floor, funded_cap] du brut.
+#   funded_floor, funded_cap : bornes de la tranche capitalisée (BVG salaire coordonné) ; au-dessus
+#                           de funded_cap -> surobligatoire VOLONTAIRE = surplus (D6), jamais re-compté.
+# Statut par valeur : [S] sourcé, [E] estimé/dérivé, [I] posé. Sentinelle non-plafonné = 100000000.
+country,employer_ssc_rate,payg_rate,payg_base_cap,payg_benefit_cap,funded_rate,funded_floor,funded_cap,status,source
+fr,0.42,0.278,370944,370944,0.0,0,0,[E],"FR répartition 27,8% brut (OCDE PaG) ; plafonné à 8xPASS (tranche 2 Agirc-Arrco, PASS 46368 2024) ; charges patronales ~42% (coût~1,42xbrut) ; PER volontaire -> surplus"
+us,0.0765,0.124,168600,168600,0.0,0,0,[S],"OASDI 12,4% RÉPARTITION plafonné à la wage base 168600 USD 2024 (SSA) ; FICA patronal ~7,65% ; 401k volontaire -> surplus (funded 0)"
+uk,0.138,0.080,50270,50270,0.080,6240,50270,[E],"pension d'État PAYG payg~8% sur qualifying earnings [6240,50270] À SOURCER (OCDE PaG UK) ; auto-enrolment DC 8% même tranche (gov.uk) ; NI patronal 13,8%"
+ch,0.13,0.106,100000000,88200,0.125,25725,88200,[S],"AVS/AI/APG 10,6% du brut NON plafonné (assiette), mais DROIT plafonné au salaire déterminant max AVS ~88200 CHF (au-dessus = redistribution) ; BVG 2e pilier ~12,5% age-moyen de la tranche coordonnée [25725,88200] 2024 ; charges patronales ~13%"
