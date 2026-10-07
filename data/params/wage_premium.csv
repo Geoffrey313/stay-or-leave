@@ -13,6 +13,11 @@
 # (2) coupe transversale = BORNE HAUTE du premium causal d'un partant (sélection positive) ;
 # (3) friction (diplôme, langue, chômage) = bloc D8 (kappa), jamais phi. À raffiner au sommet
 # par rémunération occupationnelle de queue (BLS OES / ONS ASHE, crosswalk ISCO-SOC).
+# DÉCISIF (constat SMM 06/10) : la prime de queue d'élite (role_ratio ~1,14-1,29) est POSÉE, pas
+# sourcée, et elle décide le SIGNE de l'aménité estimée (A en borne basse sous 0,97 sourcé ; A>0
+# seulement à 1,29). La revendication « attachement au pays positif chez les partants » dépend donc
+# de ce seul paramètre non sourcé. À RÉSOUDRE (BLS OES / ONS ASHE, crosswalk ISCO-SOC) AVANT de
+# publier A>0 ; sinon A reste présenté en pure fonction du role_ratio avec bande de sensibilité.
 destination,role_ratio_ppp,status,source
 us,0.970,[E],"OCDE EaG EARN_RELATIVE tertiaire 5-8 vs sec.sup, 25-64 ; US174,4/FR179,8 ; proxy éducation"
 uk,0.789,[E],"OCDE EaG EARN_RELATIVE tertiaire 5-8 vs sec.sup, 25-64 ; UK141,8/FR179,8 ; proxy éducation"

@@ -69,8 +69,33 @@ def estimate(a_grid=None, kappa_grid=None, role_ratio=None) -> dict:
             surface.append((A, kap, dist, sim["peak_departure_age"], sim["emigrant_share"], sim["return_rate"]))
             if best is None or dist < best[2]:
                 best = (A, kap, dist, sim)
+    a_floor, a_ceil = a_grid[0], a_grid[-1]
     return {"best_A": best[0], "best_kappa": best[1], "distance": best[2],
-            "moments_sim": best[3], "moments_obs": obs, "surface": surface}
+            "moments_sim": best[3], "moments_obs": obs, "surface": surface,
+            # une estimation au bord de la grille A n'est PAS un point intérieur : les flux disent
+            # seulement « A aussi bas (ou haut) que permis », A n'est pas séparable de kappa là.
+            "A_at_lower_bound": best[0] <= a_floor, "A_at_upper_bound": best[0] >= a_ceil}
+
+
+# Ancres de role_ratio pour la courbe A*(role_ratio). 0,97 = proxy éducation SOURCÉ (OCDE EaG) ;
+# 1,14 et 1,29 = prime d'OCCUPATION d'élite, POSÉE (non sourcée : BLS OES / ONS ASHE, crosswalk
+# ISCO-SOC, à résoudre avant toute revendication d'aménité positive). Le signe de A dépend de
+# cette prime de queue, donc on publie A et kappa en FONCTION d'elle, pas un verdict unique.
+ROLE_RATIO_ANCHORS = [(0.970, "proxy éducation (sourcé)"),
+                      (1.140, "occupation élite (posé)"),
+                      (1.290, "occupation élite (posé)")]
+
+
+def estimate_amenity_curve(anchors=ROLE_RATIO_ANCHORS) -> list:
+    """A*(role_ratio) et kappa*(role_ratio) sur les ancres : la bande de sensibilité qui situe
+    l'incertitude. Chaque point est une SMM complète au role_ratio donné."""
+    out = []
+    for rr, kind in anchors:
+        e = estimate(role_ratio=rr)
+        out.append({"role_ratio": rr, "kind": kind, "A": e["best_A"], "kappa": e["best_kappa"],
+                    "distance": e["distance"], "A_at_lower_bound": e["A_at_lower_bound"],
+                    "A_at_upper_bound": e["A_at_upper_bound"], "moments_sim": e["moments_sim"]})
+    return out
 
 
 if __name__ == "__main__":

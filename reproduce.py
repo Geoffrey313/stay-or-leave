@@ -34,7 +34,7 @@ from src.data.wage_premium import load_wage_premium, load_education_premium, loa
 from src.engine.wage_premium import translate_rank, break_even_role_ratio
 from src.engine.simulate import simulate_moments
 from src.analysis.solver_gate import check_gate, all_pass, format_gate, amenity_identifiability
-from src.analysis.estimate_amenity_migration import estimate as estimate_amenity_migration
+from src.analysis.estimate_amenity_migration import estimate_amenity_curve
 
 SMIC_ANNUAL_COST = 28000  # borne de la zone de transferts (profil et pays de référence)
 
@@ -221,19 +221,25 @@ def main() -> None:
     byA = " ".join(f"A={a:.0f}:retour={r:.3f}" for a, r in sens["return_by_amenity"].items())
     print(f"    balayage aménité -> {byA}")
     if all_pass(gate):
-        print("    => les trois conditions passent : la SMM se lit, kappa*/A* publiés.")
-        # --- SMM (D13) : estimation unique de A et kappa sur les flux, solveur validé ---
-        est = estimate_amenity_migration()
-        s = est["moments_sim"]
-        print("\n=== SMM (D13) : estimation de A et kappa sur les flux migratoires ===")
-        print(f"    A* = {est['best_A']:.0f} (A/c_ref = {est['best_A']/res.cref:.2f}) , kappa* = {est['best_kappa']:.0f}"
-              f"  (distance {est['distance']:.3f})")
-        print(f"    moments simulés : pic âge={s['peak_departure_age']}, stock net étranger={s['abroad_share_end']:.3f},")
-        print(f"      taux de retour={s['return_rate']:.3f} ; observés {est['moments_obs']}")
-        print("    Lecture : sous le proxy éducation (role_ratio~0,97) l'aménité tombe au plancher — les flux")
-        print("    ne réclament pas d'attachement positif, kappa porte l'ajustement ; l'aménité positive")
-        print("    apparaît sous la queue d'occupation d'élite, le régime des vrais partants (sensibilité en")
-        print("    module). Résidus déclarés : pic de départ et taux de retour non parfaits (moments grossiers).")
+        print("    => les trois conditions passent : la SMM se lit.")
+        # --- SMM (D13) : A et kappa en FONCTION du role_ratio (le seuil, pas le verdict) ---
+        curve = estimate_amenity_curve()
+        print("\n=== SMM (D13) : A et kappa en fonction de la prime de queue role_ratio ===")
+        print("    Le signe de A dépend de la prime d'occupation de queue. On publie donc A/kappa en")
+        print("    FONCTION d'elle, pas un verdict unique (discipline D7 : le seuil, pas le verdict).")
+        print(f"  {'role_ratio':>10} {'A*/c_ref':>9} {'A* ($)':>8} {'kappa* ($)':>11} {'dist':>6}  statut / source")
+        for p in curve:
+            tag = " [A EN BORNE BASSE]" if p["A_at_lower_bound"] else (" [A en borne haute]" if p["A_at_upper_bound"] else "")
+            print(f"  {p['role_ratio']:>10.2f} {p['A']/res.cref:>9.2f} {p['A']:>8.0f} {p['kappa']:>11.0f}"
+                  f" {p['distance']:>6.3f}  {p['kind']}{tag}")
+        print("    Lecture : sous le proxy éducation SOURCÉ (0,97 ~ phi=1), A est en BORNE BASSE, non")
+        print("    séparable de kappa (les flux disent seulement « A aussi bas que permis » ; sous phi~1")
+        print("    c'est kappa qui porte l'ajustement, A n'est pas identifié là). A monte vers ~0,24 c_ref")
+        print("    quand la prime de queue passe à l'élite occupationnelle — mais ce role_ratio (1,14-1,29)")
+        print("    est POSÉ, non sourcé (BLS OES / ONS ASHE, crosswalk ISCO-SOC). La revendication d'un")
+        print("    attachement au pays POSITIF chez les partants dépend donc de ce paramètre non sourcé :")
+        print("    il est à résoudre AVANT publication, sinon A reste une pure fonction du role_ratio.")
+        print("    Résidus déclarés : pic de départ et taux de retour non parfaits (moments grossiers D13).")
     else:
         print("    => une condition CASSE : estimation NON publiée (échec nommé, pas un soupçon).")
 
