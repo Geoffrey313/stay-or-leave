@@ -44,7 +44,7 @@ from src.analysis.solver_gate import (check_gate, all_pass, format_gate,
 from src.analysis.estimate_amenity_migration import estimate as estimate_amenity, estimate_amenity_curve
 from src.analysis.estimate_amenity_heterogeneous import estimate_heterogeneous
 from src.analysis.estimate_amenity_joint import estimate_joint
-from src.figures.figures import generate as generate_figures
+from src.figures.export import export_all
 
 SMIC_ANNUAL_COST = 28000  # borne de la zone de transferts (profil et pays de référence)
 
@@ -424,13 +424,13 @@ def main(full: bool = False) -> None:
     print("    la circularité (mu n'était qu'ajusté sur les flux). Limite : parts/intentions, pas un")
     print("    équivalent-consommation -> corroboration de magnitude et de structure, pas re-estimation fine.")
 
-    # --- Figures (research-repo-rules §4) : générées par code, jeux EN et FR, empreintes de contenu ---
-    print("\n=== FIGURES (EN+FR, générées par code dans src/figures, empreintes de contenu) ===")
-    figs = generate_figures(full=full)
-    for name in sorted({k.split(":")[0] for k in figs}):
-        print(f"    {name:18s} : {figs[name + ':fr']}")
+    # --- Données de figures (research-repo-rules §4) : exportées en .dat, tracées en LaTeX (pgfplots/TikZ) ---
+    print("\n=== DONNÉES DE FIGURES (.dat dans manuscript/{fr,en}/ssrn/figures, empreintes de contenu) ===")
+    figs = export_all(full=full)
+    for name in sorted(k for k in figs if not k.startswith("_")):
+        print(f"    {name:16s} : {figs[name]}")
     if not full:
-        print("    (figures lourdes B12/B13/C14/D16 : python reproduce.py --full)")
+        print("    (données lourdes B12/B13/C14/D16 : python reproduce.py --full)")
 
 
 if __name__ == "__main__":
