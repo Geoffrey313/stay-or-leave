@@ -39,10 +39,12 @@ from src.data.wage_premium import load_wage_premium, load_education_premium, loa
 from src.engine.wage_premium import translate_rank, break_even_role_ratio
 from src.engine.simulate import simulate_moments
 from src.analysis.solver_gate import (check_gate, all_pass, format_gate,
-                                       amenity_identifiability, retention_check)
+                                       amenity_identifiability, retention_check,
+                                       grid_robustness_check)
 from src.analysis.estimate_amenity_migration import estimate as estimate_amenity, estimate_amenity_curve
 from src.analysis.estimate_amenity_heterogeneous import estimate_heterogeneous
 from src.analysis.estimate_amenity_joint import estimate_joint
+from src.figures.figures import generate as generate_figures
 
 SMIC_ANNUAL_COST = 28000  # borne de la zone de transferts (profil et pays de référence)
 
@@ -72,6 +74,15 @@ def main(full: bool = False) -> None:
 
     print("\nOK : par pays et profil, theta brut décroissant au-dessus du seuil ; "
           "theta élargi >= theta brut.")
+
+    # --- Statistiques descriptives de theta_brut par pays finement mesuré (annexe F) ---
+    import numpy as _np
+    print("\n[Annexe F] Statistiques descriptives de theta_brut (%), célibataire, pays à cascade fine")
+    print(f"    {'pays':16s} {'Obs':>4} {'Moyenne':>8} {'Ecart-type':>11} {'P25':>6} {'Mediane':>8} {'P75':>6}")
+    for c, name in [("fr", "France"), ("us", "Etats-Unis"), ("uk", "Royaume-Uni"), ("ch", "Suisse")]:
+        th = [p.theta_brut * 100 for p in conversion(load_cascade(c)) if p.profile == "celibataire"]
+        print(f"    {name:16s} {len(th):>4} {_np.mean(th):>8.1f} {_np.std(th, ddof=1):>11.1f} "
+              f"{_np.percentile(th, 25):>6.1f} {_np.percentile(th, 50):>8.1f} {_np.percentile(th, 75):>6.1f}")
 
     # --- Premier benchmark statique : rester vs partir (pouvoir d'achat réel) ---
     col = load_cost_of_living()
@@ -218,17 +229,18 @@ def main(full: bool = False) -> None:
     print("    (estimande A/c_ref), terminal annuité (W_f au taux équivalent-certain net d'impôt, W_p au taux")
     print("    sûr) passé par le MÊME u -> agent averse au risque PARTOUT, l'ajustement D5/D6 mord sur W_f.")
 
-    # --- Porte d'acceptation du solveur : quatre conditions (1-3 SMM headline OFF ; 4 rétention D4) ---
+    # --- Porte du solveur : cinq conditions (1-3 SMM headline OFF ; 4 rétention D4 ; 5 grille C15) ---
     sim = simulate_moments(res)
     sens = amenity_identifiability(col, pen, tax, house, cal, dyn)
     reten = retention_check(col, pen, tax, house, cal, dyn)
-    gate = check_gate(res, sim, dyn.sigma_eta, amenity_spread=sens["spread"], retention=reten)
+    grd = grid_robustness_check(col, pen, tax, house, cal, dyn)
+    gate = check_gate(res, sim, dyn.sigma_eta, amenity_spread=sens["spread"], retention=reten, grid=grd)
     print("\n=== PORTE DU SOLVEUR (critère d'arrêt avant SMM) ===")
     print(format_gate(gate))
     byA = " ".join(f"A={a:.0f}:retour={r:.3f}" for a, r in sens["return_by_amenity"].items())
     print(f"    balayage aménité -> {byA}")
     if all_pass(gate):
-        print("    => les quatre conditions passent : SMM lue sur le headline sans logement (atteint 6%).")
+        print("    => les cinq conditions passent : grilles non mordantes (C15), SMM lue sur le headline sans logement (atteint 6%).")
         if full:
             # --- SMM COMPLÈTE (D13) : A et kappa en FONCTION du role_ratio (le seuil, pas le verdict) ---
             # Résultat de publication ; régénéré par `python reproduce.py --full` (déterministe, lourd).
@@ -411,6 +423,14 @@ def main(full: bool = False) -> None:
     print("    mu_A~0,65 c_ref estimé sur les corridors) et la STRUCTURE attache+appel > revenu pur. Lève")
     print("    la circularité (mu n'était qu'ajusté sur les flux). Limite : parts/intentions, pas un")
     print("    équivalent-consommation -> corroboration de magnitude et de structure, pas re-estimation fine.")
+
+    # --- Figures (research-repo-rules §4) : générées par code, jeux EN et FR, empreintes de contenu ---
+    print("\n=== FIGURES (EN+FR, générées par code dans src/figures, empreintes de contenu) ===")
+    figs = generate_figures(full=full)
+    for name in sorted({k.split(":")[0] for k in figs}):
+        print(f"    {name:18s} : {figs[name + ':fr']}")
+    if not full:
+        print("    (figures lourdes B12/B13/C14/D16 : python reproduce.py --full)")
 
 
 if __name__ == "__main__":

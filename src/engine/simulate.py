@@ -120,6 +120,13 @@ def simulate_moments(res) -> dict:
 
     total_dep, total_ret = sum(departures.values()), sum(returns.values())
     peak = max(departures, key=lambda a: departures[a]) if total_dep > 0 else None
+    # Masse terminale dans le bin de patrimoine de TÊTE (diagnostic de mordance de grille, C15) :
+    # fraction de la cohorte dont W_f (resp. W_p) atterrit sur le dernier noeud de grille. Une masse
+    # non négligeable au plafond signale une troncature (le snap au plus proche y empile la masse).
+    tot = float(D[o].sum() + D[d_].sum())
+    wf_top = float(D[o][:, :, -1, :].sum() + D[d_][:, :, -1, :].sum()) / tot if tot > 0 else 0.0
+    wp_top = float(D[o][:, :, :, -1].sum() + D[d_][:, :, :, -1].sum()) / tot if tot > 0 else 0.0
     return {"departures_by_age": departures, "peak_departure_age": peak,
             "emigrant_share": total_dep, "return_rate": (total_ret / total_dep) if total_dep > 0 else 0.0,
-            "abroad_share_end": float(D[d_].sum())}
+            "abroad_share_end": float(D[d_].sum()),
+            "wf_top_mass": wf_top, "wp_top_mass": wp_top}

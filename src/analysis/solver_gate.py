@@ -17,9 +17,14 @@ impression de propreté :
      canal propriété activé qu'avec (ownership ON < OFF), aux deux régimes de role_ratio. Mesurée
      sur la DISTRIBUTION (pas au point représentatif). Tient quel que soit le défaut du headline ;
      c'est une propriété du modèle (le logement retient), prouvée, pas affirmée.
+  5. GRILLES de patrimoine NON MORDANTES (validité numérique, bloc C15) : les moments de tête sont
+     invariants quand on double l'étendue des grilles W_f/W_p en préservant la résolution, et la
+     masse terminale au plafond est négligeable. Sans cette condition, les chiffres du haut de
+     distribution (verdict d'élite, SMM, encadrement) pourraient être des artefacts de troncature.
 
 Les conditions 1-3 valident la lecture de la SMM (headline sans logement, qui atteint 6 %). La
-condition 4 valide le résultat D4. Une condition qui casse est un échec NOMMÉ.
+condition 4 valide le résultat D4. La condition 5 valide que le solveur ne tronque pas le patrimoine
+au sommet, là où vivent les résultats de tête. Une condition qui casse est un échec NOMMÉ.
 """
 from __future__ import annotations
 
@@ -59,8 +64,36 @@ def retention_check(col, pen, tax, house, cal, dyn, a_ref=0.0, kappa_ref=20000.0
     return {"by_regime": by_regime, "holds": holds}
 
 
+def grid_robustness_check(col, pen, tax, house, cal, dyn, role_ratios=(None, 1.27),
+                          a_ref=0.0, kappa_ref=20000.0, tol=0.01) -> dict:
+    """Condition 5 (VALIDITÉ, pas présentation) : les grilles de patrimoine W_f et W_p ne mordent
+    pas. Si le plafond de grille sature au sommet (P99+, où vivent le verdict d'élite, la SMM et
+    l'encadrement), les chiffres de tête sont des artefacts de troncature. Test d'INVARIANCE À
+    L'ÉTENDUE : on double l'étendue des grilles ET le nombre de noeuds (résolution préservée) et on
+    vérifie que les moments de tête (part d'émigrés, stock net à l'étranger) ne bougent pas, aux deux
+    régimes de prime. Diagnostic complémentaire : masse terminale dans le bin de tête (snap au plus
+    proche -> une grille qui mord empile la masse au plafond). `holds` = invariance sous tol."""
+    from src.engine.bellman import solve
+    from src.engine.simulate import simulate_moments
+    d = dyn.model_copy(update={"amenity": float(a_ref), "kappa": float(kappa_ref)})
+    by_regime, holds, worst = {}, True, 0.0
+    for rr in role_ratios:
+        base = simulate_moments(solve("fr", "us", col, pen, tax, house, cal, d, role_ratio=rr,
+                                      nf=12, npp=8, Wf_max=6_000_000.0, Wp_max=2_000_000.0))
+        wide = simulate_moments(solve("fr", "us", col, pen, tax, house, cal, d, role_ratio=rr,
+                                      nf=24, npp=16, Wf_max=12_000_000.0, Wp_max=4_000_000.0))
+        de = abs(wide["emigrant_share"] - base["emigrant_share"])
+        da = abs(wide["abroad_share_end"] - base["abroad_share_end"])
+        worst = max(worst, de, da)
+        holds = holds and de <= tol and da <= tol
+        by_regime[rr] = {"emig": (base["emigrant_share"], wide["emigrant_share"]),
+                         "net": (base["abroad_share_end"], wide["abroad_share_end"]),
+                         "top": (base["wf_top_mass"], base["wp_top_mass"])}
+    return {"by_regime": by_regime, "worst_delta": worst, "tol": tol, "holds": holds}
+
+
 def check_gate(res, sim: dict, sigma_eta_target: float, amenity_spread: float | None = None,
-               retention: dict | None = None,
+               retention: dict | None = None, grid: dict | None = None,
                emigrant_obs: float = 0.06, spread_min: float = 0.05) -> Dict[str, dict]:
     """Évalue les conditions. Renvoie {nom: {pass, value, detail}}. amenity_spread = écart du taux de
     retour sur le balayage de A (condition 2) ; retention = sortie de retention_check (condition 4).
@@ -98,6 +131,17 @@ def check_gate(res, sim: dict, sigma_eta_target: float, amenity_spread: float | 
                          for rr, (off, on) in reg.items())
         out["retention_immobiliere"] = {"pass": bool(retention["holds"]), "value": None,
                                         "detail": f"net OFF->ON (doit baisser) : {det}"}
+    # 5. grilles de patrimoine non mordantes (VALIDITÉ) : moments invariants quand on double
+    #    l'étendue W_f/W_p (résolution préservée) ; masse terminale au plafond négligeable.
+    if grid is not None:
+        reg = grid["by_regime"]
+        det = " ; ".join(
+            f"{'proxy' if rr is None else f'rr={rr}'}: émig {v['emig'][0]:.3f}->{v['emig'][1]:.3f}, "
+            f"net {v['net'][0]:.3f}->{v['net'][1]:.3f}, bin tête W_f/W_p {v['top'][0]:.1e}/{v['top'][1]:.1e}"
+            for rr, v in reg.items())
+        out["grille_non_mordante"] = {"pass": bool(grid["holds"]), "value": grid["worst_delta"],
+                                      "detail": f"écart max en doublant l'étendue {grid['worst_delta']:.4f} "
+                                                f"(seuil {grid['tol']}) ; {det}"}
     return out
 
 
