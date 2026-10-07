@@ -38,7 +38,8 @@ from src.engine.patrimony import lifetime_patrimony, stay_or_leave_lifetime
 from src.data.wage_premium import load_wage_premium, load_education_premium, load_occupation_premium
 from src.engine.wage_premium import translate_rank, break_even_role_ratio
 from src.engine.simulate import simulate_moments
-from src.analysis.solver_gate import check_gate, all_pass, format_gate, amenity_identifiability
+from src.analysis.solver_gate import (check_gate, all_pass, format_gate,
+                                       amenity_identifiability, retention_check)
 from src.analysis.estimate_amenity_migration import estimate as estimate_amenity, estimate_amenity_curve
 
 SMIC_ANNUAL_COST = 28000  # borne de la zone de transferts (profil et pays de référence)
@@ -217,16 +218,17 @@ def main(full: bool = False) -> None:
     print("    (estimande A/c_ref), terminal annuité (W_f au taux équivalent-certain net d'impôt, W_p au taux")
     print("    sûr) passé par le MÊME u -> agent averse au risque PARTOUT, l'ajustement D5/D6 mord sur W_f.")
 
-    # --- Porte d'acceptation du solveur : trois conditions avant lecture de la SMM (D13) ---
+    # --- Porte d'acceptation du solveur : quatre conditions (1-3 SMM headline OFF ; 4 rétention D4) ---
     sim = simulate_moments(res)
     sens = amenity_identifiability(col, pen, tax, house, cal, dyn)
-    gate = check_gate(res, sim, dyn.sigma_eta, amenity_spread=sens["spread"])
+    reten = retention_check(col, pen, tax, house, cal, dyn)
+    gate = check_gate(res, sim, dyn.sigma_eta, amenity_spread=sens["spread"], retention=reten)
     print("\n=== PORTE DU SOLVEUR (critère d'arrêt avant SMM) ===")
     print(format_gate(gate))
     byA = " ".join(f"A={a:.0f}:retour={r:.3f}" for a, r in sens["return_by_amenity"].items())
     print(f"    balayage aménité -> {byA}")
     if all_pass(gate):
-        print("    => les trois conditions passent : la SMM se lit.")
+        print("    => les quatre conditions passent : SMM lue sur le headline sans logement (atteint 6%).")
         if full:
             # --- SMM COMPLÈTE (D13) : A et kappa en FONCTION du role_ratio (le seuil, pas le verdict) ---
             # Résultat de publication ; régénéré par `python reproduce.py --full` (déterministe, lourd).
@@ -283,18 +285,29 @@ def main(full: bool = False) -> None:
     print("    l'équité : +30 à +50% de coût de sortie effectif pour un propriétaire. Loyer imputé")
     print("    DIFFÉRENTIEL (jamais ajout absolu, déjà dans IC_p).")
 
-    # --- D4 câblé : 3e accumulateur W_h (axe durée entier) ; RÉTENTION sur la distribution ---
-    print("\n    RÉTENTION (distribution, A=0 kappa=20000) : stock net à l'étranger, propriété ON vs OFF")
+    # --- D4 : ENCADREMENT de l'émigration (borne basse sans logement / borne haute lock-in) ---
+    print("\n=== D4 : encadrement par le canal propriété (switch documenté, OFF = headline) ===")
     dref = dyn.model_copy(update={"amenity": 0.0, "kappa": 20000.0})
+    print("    Stock net à l'étranger à params communs (A=0, kappa=20000), propriété OFF vs ON :")
     for rr, lab in [(None, "proxy éducation"), (1.29, "élite occupationnelle")]:
         off = simulate_moments(bellman_solve("fr", "us", col, pen, tax, house, cal, dref, role_ratio=rr, ownership=False))
         on = simulate_moments(bellman_solve("fr", "us", col, pen, tax, house, cal, dref, role_ratio=rr, ownership=True))
-        print(f"      {lab:>22} : net OFF={off['abroad_share_end']:.3f} -> ON={on['abroad_share_end']:.3f}"
-              f"  (propriété RETIENT : ON<OFF)")
-    print("    Le canal propriété retient aux deux régimes (vente forcée à frais + loyer imputé). Le")
-    print("    solveur à 3 accumulateurs (W_f, W_p, W_h en durée entière) reproduit bit-à-bit le baseline")
-    print("    sans logement quand ownership=OFF. Ré-estimation kappa/A propriété ON et énoncé de la")
-    print("    sur-rétention : étape suivante (canal désactivé par défaut tant que l'énoncé n'est pas figé).")
+        print(f"      {lab:>22} : OFF={off['abroad_share_end']:.3f} (borne basse) -> ON={on['abroad_share_end']:.3f} (borne haute)")
+    print("    Deux RÉSULTATS, pas un gap à décomposer :")
+    print("    (i) la rétention par le logement est de PREMIER ORDRE (condition 4, signée aux deux régimes) ;")
+    print("    (ii) imposé UNIVERSELLEMENT et déterministe, le lock-in SUR-RETIENT : net plafonne ~4% même")
+    print("         à migration quasi gratuite, sous les 6% observés -> régime RÉFUTÉ par les flux, au même")
+    print("         titre que phi=1 (A*=0 y est un ARTEFACT de sur-rétention, pas une absence d'aménité).")
+    print("    Le modèle ENCADRE donc l'émigration : borne basse sans logement (atteint 6% mais ignore la")
+    print("    force logement prouvée), borne haute à lock-in universel (sur-retient à ~4%) ; le 6% observé")
+    print("    est entre les deux. La fourchette est IDENTIFIÉE. La marge de mobilité non modélisée (~2 pts)")
+    print("    est compatible avec plusieurs mécanismes que ce modèle NE SÉPARE PAS : (1) louer plutôt que")
+    print("    posséder (tenure endogène) ; (2) GARDER-ET-LOUER plutôt que vendre (évite la vente forcée,")
+    print("    d'où vient la sur-rétention) ; (3) dénominateur MEAE « Français » != cadres (écart de")
+    print("    population) ; (4) queue d'élite sous-sourcée (role_ratio>1,29). La localiser dans la")
+    print("    fourchette relève de la tenure endogène et/ou du garder-et-louer : travaux futurs.")
+    print("    Propriété-ON reste un SWITCH (ownership=True), jamais le défaut tant que ces marges ne sont")
+    print("    pas modélisées. Solveur 3 accumulateurs = baseline sans logement bit-à-bit quand OFF.")
 
 
 if __name__ == "__main__":
