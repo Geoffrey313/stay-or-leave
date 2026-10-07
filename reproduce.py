@@ -44,6 +44,7 @@ from src.analysis.solver_gate import (check_gate, all_pass, format_gate,
 from src.analysis.estimate_amenity_migration import estimate as estimate_amenity, estimate_amenity_curve
 from src.analysis.estimate_amenity_heterogeneous import estimate_heterogeneous
 from src.analysis.estimate_amenity_joint import estimate_joint
+from src.analysis.sensitivity import sensitivity_sweep, PARAMS
 from src.figures.export import export_all
 
 SMIC_ANNUAL_COST = 28000  # borne de la zone de transferts (profil et pays de référence)
@@ -431,6 +432,21 @@ def main(full: bool = False) -> None:
         print(f"    {name:16s} : {figs[name]}")
     if not full:
         print("    (données lourdes B12/B13/C14/D16 : python reproduce.py --full)")
+
+    # --- Sensibilité au premier ordre (SL-US-03) : robustesse du verdict aux paramètres POSÉS ---
+    if full:
+        print("\n=== SENSIBILITÉ AU PREMIER ORDRE (verdict vs paramètres posés, un à la fois) ===")
+        sweeps = {"gamma": [1.0, 2.0, 3.0], "r_mkt": [0.035, 0.045, 0.055],
+                  "saturation": [45000.0, 55000.0, 65000.0]}
+        for name, vals in sweeps.items():
+            r = sensitivity_sweep(col, pen, tax, house, cal, dyn, PARAMS[name], vals)
+            print(f"  {name} ({PARAMS[name]}) : ordre du verdict tenu partout = {r['holds']}")
+            print(f"    {'valeur':>10} {'net headline':>12} {'net propriété':>13} {'net élite':>10}")
+            for v, off, on, el in r["rows"]:
+                print(f"    {v:>10.3f} {off:>12.3f} {on:>13.3f} {el:>10.3f}")
+        print("    Lecture : l'ORDRE du verdict (élite > headline, propriété retient) tient à r_mkt et,")
+        print("    en ordre, à gamma ; mais les NIVEAUX dépendent de gamma (le match aux ~6% repose sur")
+        print("    gamma~2), et la marge de rétention s'amenuise à saturation élevée (65k).")
 
 
 if __name__ == "__main__":
