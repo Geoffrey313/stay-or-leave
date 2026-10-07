@@ -42,6 +42,7 @@ from src.analysis.solver_gate import (check_gate, all_pass, format_gate,
                                        amenity_identifiability, retention_check)
 from src.analysis.estimate_amenity_migration import estimate as estimate_amenity, estimate_amenity_curve
 from src.analysis.estimate_amenity_heterogeneous import estimate_heterogeneous
+from src.analysis.estimate_amenity_joint import estimate_joint
 
 SMIC_ANNUAL_COST = 28000  # borne de la zone de transferts (profil et pays de référence)
 
@@ -359,8 +360,25 @@ def main(full: bool = False) -> None:
         print("      DISPERSION sigma_A. NUANCE à nommer : mu_A diffère par destination (CH ~0,65 c_ref vs US")
         print("      ~0) alors que l'attache à la France est UNE propriété des Français. Donc A est à lire")
         print("      comme le NET stay-amenity SPÉCIFIQUE à la destination (attache France nette de l'appel")
-        print("      propre au pays : proximité/langue/réseaux), PAS une attache universelle ; une estimation")
-        print("      JOINTE (un seul A à travers les corridors) est le test de cohérence suivant (travaux futurs).")
+        print("      propre au pays : proximité/langue/réseaux), PAS une attache universelle. Test de")
+        print("      cohérence par estimation JOINTE ci-dessous.")
+        # --- Estimation JOINTE multi-corridor : test de cohérence de l'attache ---
+        j = estimate_joint()
+        v1, v2 = j["v1_common_only"], j["v2_common_plus_proximity"]
+        print("\n    ESTIMATION JOINTE (test de cohérence : une attache à la France commune aux corridors ?) :")
+        print(f"      V1 attache COMMUNE seule : mu_A={v1['mu_A']/res.cref:.2f} c_ref sigma={v1['sigma_A']:.0f}")
+        print(f"         -> net CH={v1['net']['ch']:.3f} US={v1['net']['us']:.3f} (obs 0,06) ; distance {v1['distance']:.3f}")
+        print(f"      V2 commune + proximité delta_CH : mu_A={v2['mu_A']/res.cref:.2f} c_ref sigma={v2['sigma_A']:.0f}"
+              f" delta_CH={v2['delta_CH']/res.cref:.2f} c_ref")
+        print(f"         -> net CH={v2['net']['ch']:.3f} US={v2['net']['us']:.3f} ; distance {v2['distance']:.3f}")
+        print("      Lecture : V1 ÉCHOUE (distance ~0,9) : une attache commune qui fitte CH écrase le flux")
+        print("      US (~0,003) -> l'attache à la France n'est PAS universelle, tension nommée. V2 réconcilie")
+        print("      nettement mieux (distance ~0,16) avec une attache commune PETITE (~0,12 c_ref) + un terme")
+        print("      destination-spécifique CH substantiel (~0,16 c_ref = l'appel propre de la Suisse). MAIS")
+        print("      2 corridors -> mu et delta colinéaires, décomposition commune/spécifique non finement")
+        print("      identifiée (résidu 0,16) : un 3e corridor (FR->UK, pilier funded auto-enrolment) est")
+        print("      l'étape d'identification suivante. Résultat net : le maintien est en PARTIE une attache")
+        print("      à la France, en PARTIE un appel destination-spécifique ; pas l'un ou l'autre seul.")
     else:
         print("    SMM FR->CH (A* ~0,32 c_ref, corridor quasi-bimodal) : python reproduce.py --full")
 
