@@ -396,6 +396,22 @@ def main(full: bool = False) -> None:
     else:
         print("    SMM FR->CH (A* ~0,32 c_ref, corridor quasi-bimodal) : python reproduce.py --full")
 
+    # --- Étape 2 : corroboration EXTERNE de mu (attache), indépendante des flux ---
+    import csv as _csv
+    ext = {r["statistic"]: float(r["value"]) for r in _csv.DictReader(
+        filter(lambda l: not l.startswith("#"), open(param_file("attachment_external.csv"))))}
+    print("\n=== VALIDATION EXTERNE de l'attache (mu), hors flux (enquêtes expatriation) ===")
+    print(f"    Part de cadres dirigeants prêts à partir : {ext['share_cadres_dirigeants_willing_to_leave']:.0%}"
+          f" ; intention large <2 ans : {ext['share_salaries_intend_leave_2y']:.0%} (hypothétique, pas le flux).")
+    print(f"    Motifs des expatriés RÉELS : amour {ext['share_expat_reason_love']:.0%} >"
+          f" rémunération {ext['share_expat_reason_remuneration']:.0%} ; fiers d'être français"
+          f" {ext['share_expat_proud_french']:.0%}.")
+    print("    Lecture : une part ~3-6% réellement prête à partir, et des motifs NON-ÉCONOMIQUES dominants,")
+    print("    corroborent INDÉPENDAMMENT des flux une attache GRANDE et partagée (cohérente avec le")
+    print("    mu_A~0,65 c_ref estimé sur les corridors) et la STRUCTURE attache+appel > revenu pur. Lève")
+    print("    la circularité (mu n'était qu'ajusté sur les flux). Limite : parts/intentions, pas un")
+    print("    équivalent-consommation -> corroboration de magnitude et de structure, pas re-estimation fine.")
+
 
 if __name__ == "__main__":
     import sys

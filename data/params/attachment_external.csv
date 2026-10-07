@@ -1,0 +1,16 @@
+# Données EXTERNES d'attachement (bloc D13, étape 2) : pour corroborer mu_A (attache au pays)
+# INDÉPENDAMMENT des flux migratoires, et lever la circularité (mu n'était ajusté que sur les flux).
+# Ce sont des PARTS / INTENTIONS d'enquêtes, pas un équivalent-consommation : elles valident la
+# MAGNITUDE de l'attache (large, partagée) et la STRUCTURE (motifs non-économiques > revenu), pas
+# une valeur fine de mu_A en c_ref. Flaggées [S] (chiffre d'enquête publié).
+# Lecture : une part "prêts à partir" ~ 3-6% est cohérente avec un modèle où ~6% émigrent et où
+# l'attache mu_A est grande (~0,65 c_ref estimé sur les corridors) ; le poids des motifs non-
+# économiques (amour 25% > rémunération 13%) corrobore que attache + appel de destination priment
+# sur le revenu pur, exactement la structure destination-dépendante du modèle.
+statistic,value,status,source
+share_cadres_dirigeants_willing_to_leave,0.03,[S],"seuls 3% des objectifs de carrière des cadres dirigeants FR concernent un poste à l'étranger (Experteer)"
+share_salaries_intend_leave_2y,0.25,[S],"~1/4 désireux de partir sous 2 ans (ADP Workforce View in Europe 2019) ; INTENTION large, pas flux"
+share_expat_reason_remuneration,0.13,[S],"13% des expatriés citent une rémunération plus élevée comme motif (Observatoire expatriation BT/OpinionWay)"
+share_expat_reason_love,0.25,[S],"25% citent l'amour ; motifs non-économiques dominants (Observatoire expatriation BT)"
+share_expat_proud_french,0.85,[S],"85% des expatriés se disent fiers d'être français, attachement fort maintenu (Observatoire BT 2023)"
+share_millionaires_intend_leave_10y,0.40,[S],"40% des millionnaires FR envisagent de partir sous 10 ans (queue patrimoniale, fiscalité ; hors cadre médian)"
