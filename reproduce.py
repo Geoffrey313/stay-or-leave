@@ -32,6 +32,8 @@ from src.engine.surplus import surplus_switch
 from src.engine.patrimony import lifetime_patrimony, stay_or_leave_lifetime
 from src.data.wage_premium import load_wage_premium, load_education_premium, load_occupation_premium
 from src.engine.wage_premium import translate_rank, break_even_role_ratio
+from src.engine.simulate import simulate_moments
+from src.analysis.solver_gate import check_gate, all_pass, format_gate
 
 SMIC_ANNUAL_COST = 28000  # borne de la zone de transferts (profil et pays de référence)
 
@@ -206,13 +208,25 @@ def main() -> None:
     print("    s'éteignant avec l'âge. Atterrissage en rang net du niveau (D7) : role_ratio=1 redonne phi=1 ;")
     print("    le proxy éducation (0,97) ~ identité au grain des 8 percentiles ; la queue d'OCCUPATION")
     print("    d'élite (role_ratio>1,1) décale vers le haut et étend le départ (commit du test du sommet).")
-    print("    CONSTAT D13 (estimation NON publiée ici) : la SMM sur flux (module estimate_amenity_migration)")
-    print("    reste faussée par un défaut de pondération du processus de revenu — la distribution de")
-    print("    position de la cohorte est la stationnaire UNIFORME de la marche tridiagonale, qui met 37,5%")
-    print("    de la masse dans le top-3 percentiles (P95-P99,9) contre ~7,5% de masse réelle de population.")
-    print("    La queue qui migre est donc sur-pondérée ~5x -> churn (émigrés bruts ~0,88, retour ~0,94).")
-    print("    Correctif requis avant lecture de kappa/A : pondérer le processus par la masse de population")
-    print("    par ancrage de percentile (distribution initiale ET stationnaire de la transition).")
+    print(f"    Processus de revenu pondéré population : transition M-H vers les masses Voronoi, mobilité")
+    print(f"    p_move={res.p_move:.3f} calibrée pour sigma implicite={res.sigma_impl:.3f} = sigma_eta (D11).")
+
+    # --- Porte d'acceptation du solveur : trois conditions avant lecture de la SMM (D13) ---
+    sim = simulate_moments(res)
+    gate = check_gate(res, sim, dyn.sigma_eta)
+    print("\n=== PORTE DU SOLVEUR (critère d'arrêt avant SMM) ===")
+    print(format_gate(gate))
+    if all_pass(gate):
+        print("    => les trois conditions passent : la SMM se lit, kappa*/A* publiables.")
+    else:
+        print("    => une condition CASSE : estimation NON publiée (échec nommé, pas un soupçon).")
+        print("    Échec nommé : l'aménité A est INERTE. Les moments sont invariants à A et quasi à delta")
+        print("    (taux de retour ~0,93 quel que soit A). Cause : la CRRA u(c)=1-1/c sur une consommation")
+        print("    en dollars BRUTS est quasi plate au-dessus de quelques milliers ; u(c+A)-u(c) ~ 1e-5/an,")
+        print("    tandis que les écarts de patrimoine terminal pèsent ~1000x plus. La politique est pilotée")
+        print("    par l'accumulation terminale, l'aménité vit dans la zone plate de u et le moment de retour")
+        print("    ne l'identifie pas. Correctif = décision de spécification de l'utilité (où entre A, unité")
+        print("    de la consommation), pas un paramètre à bouger.")
 
 
 if __name__ == "__main__":

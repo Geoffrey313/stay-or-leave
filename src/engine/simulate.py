@@ -14,12 +14,6 @@ from __future__ import annotations
 import numpy as np
 
 
-def _stationary(P: np.ndarray) -> np.ndarray:
-    vals, vecs = np.linalg.eig(P.T)
-    v = np.real(vecs[:, np.argmin(np.abs(vals - 1.0))])
-    return v / v.sum()
-
-
 def _snap(grid, value):
     return int(np.argmin(np.abs(grid - value)))
 
@@ -37,7 +31,7 @@ def simulate_moments(res) -> dict:
                            for p in range(npos)]) for c in (o, d)}
 
     D = {o: np.zeros((npos, nf, npp)), d: np.zeros((npos, nf, npp))}
-    D[o][:, 0, 0] = _stationary(P)                      # entrée : tous en origine, patrimoine nul
+    D[o][:, 0, 0] = res.pop_mass                        # entrée : masse de population par rang, patrimoine nul
     ages = res.ages
     departures, returns, origin_mass = {}, {}, {}
     for t in ages[:-1]:

@@ -14,6 +14,7 @@ risk_aversion,2.0,[I],"CRRA gamma, valeur standard littérature cycle de vie"
 career_years,40,[I],"entrée en activité ~25 ans à retraite ~65 ans"
 discount_rate_rho,0.02,[I],"actualisation du cycle de vie ; flux à rho, stocks terminaux ramenés à rho (pré-Bellman)"
 consumption_saturation_intl_usd,55000,[I],"cadre : surplus d'épargne nul sous saturation du panier (~100k de coût employeur)"
+subsistence_floor_intl_usd,5000,[I],"plancher de consommation ; le solde de kappa non couvert par W_f est prélevé sur la conso de l'année d'atterrissage jusqu'à ce plancher (migration jamais gratuite)"
 
 sigma_eta_permanent,0.12,[I],"écart-type du choc permanent de revenu (marche aléatoire), cadre"
 migration_cost_kappa_intl_usd,35000,[I],"coût fixe de migration, ~ cadre (FR->anglo ~32k), en $ int."

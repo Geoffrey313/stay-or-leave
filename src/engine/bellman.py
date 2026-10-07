@@ -48,6 +48,7 @@ from src.data.housing import Housing
 from src.data.pension import Calibration, PensionParams
 from src.data.dynamics import Dynamics
 from src.data.wage_premium import load_wage_premium
+from src.engine.income_process import calibrate_position_transition
 
 
 def _crra(c: np.ndarray, gamma: float) -> np.ndarray:
@@ -76,18 +77,6 @@ def _country_flows(country: str, col, pension, tax, housing, cal):
         save_p.append(0.0 if funded else contrib)               # -> droit répartition (r_rep)
         positions.append(p.position); real.append(real_pp)
     return positions, np.array(cons), np.array(save_f), np.array(save_p), np.array(real)
-
-
-def _position_transition(n: int, p_move: float = 0.4) -> np.ndarray:
-    """Transition tridiagonale sur les positions (persistance + mobilité symétrique)."""
-    P = np.zeros((n, n))
-    for i in range(n):
-        P[i, i] = 1 - p_move
-        if i > 0: P[i, i - 1] += p_move / 2
-        else: P[i, i] += p_move / 2
-        if i < n - 1: P[i, i + 1] += p_move / 2
-        else: P[i, i] += p_move / 2
-    return P
 
 
 def _landing_maps(real_o: np.ndarray, real_d: np.ndarray, role_ratio: float):
@@ -140,7 +129,10 @@ def solve(origin: str, destination: str, col: Dict[str, CostOfLiving],
     flows = {origin: (cons_o, sf_o, sp_o), destination: (cons_d, sf_d, sp_d)}
     o2d, d2o = _landing_maps(real_o, real_d, role_ratio)       # atterrissage en rang (D7)
     land = {origin: o2d, destination: d2o}                      # pays courant -> indices d'atterrissage
-    Ptrans = _position_transition(npos)
+    # transition de position : M-H vers les masses de population (Voronoi), mobilité calibrée sur
+    # le choc permanent sigma_eta (D11) ; stationnaire = masses -> transversale de rang non dérivante
+    Ptrans, pop_mass, p_move, sigma_impl = calibrate_position_transition(pos_o, real_o, dyn.sigma_eta)
+    floor = cal.subsistence_floor_intl_usd
     Wf_g = np.linspace(0.0, Wf_max, nf)
     Wp_g = np.linspace(0.0, Wp_max, npp)
     ages = list(range(dyn.age_start, dyn.age_retire + 1))
@@ -176,11 +168,17 @@ def solve(origin: str, destination: str, col: Dict[str, CostOfLiving],
                     il = int(land[c][ip])                                     # atterrissage en rang (D7)
                     cons_m, sf_m, sp_m = flows[other]
                     A_other = dyn.amenity if other == origin else 0.0
-                    wf_m = np.maximum(Wf_g - cost, 0.0) * (1 + r_f[other]) + sf_m[il]  # κ payé sur W_f
+                    # kappa : prélevé d'ABORD sur W_f, le SOLDE sur la conso de l'année d'atterrissage
+                    # jusqu'au plancher (le jeune sans actif paie en utilité, le riche en patrimoine ->
+                    # l'amortissement de kappa sur W_f, qui sépare kappa de A, reste lisible)
+                    paid_wf = np.minimum(Wf_g, cost)                                  # par cellule W_f
+                    unfunded = cost - paid_wf                                          # solde -> conso
+                    wf_m = (Wf_g - paid_wf) * (1 + r_f[other]) + sf_m[il]
                     wp_m = Wp_g * (1 + r_p) + sp_m[il]                                 # W_p vesté, inchangé
+                    cons_move = np.maximum(cons_m[il] + A_other - unfunded, floor)     # vecteur sur W_f
                     EV_move = sum(Ptrans[il, jp] * _interp2(V[other][jp], Wf_g, Wp_g, wf_m, wp_m)
                                   for jp in range(npos))
-                    move_val = _crra(cons_m[il] + A_other, cal.risk_aversion) + beta * EV_move
+                    move_val = _crra(cons_move, cal.risk_aversion)[:, None] + beta * EV_move
                     best = np.maximum(stay_val, move_val)
                     if c == origin:
                         leave_grid[ip] = move_val > stay_val
@@ -214,7 +212,8 @@ def solve(origin: str, destination: str, col: Dict[str, CostOfLiving],
                          Wf_g=Wf_g, Wp_g=Wp_g, r_f=r_f, r_p=r_p, flows=flows,
                          origin=origin, destination=destination, age_mig_max=dyn.age_mig_max,
                          kappa=dyn.kappa, return_cost=return_cost, role_ratio=role_ratio,
-                         land_o2d=o2d, land_d2o=d2o)
+                         land_o2d=o2d, land_d2o=d2o, pop_mass=pop_mass,
+                         p_move=p_move, sigma_impl=sigma_impl)
 
 
 class BellmanResult:
@@ -223,7 +222,8 @@ class BellmanResult:
     def __init__(self, ages, positions, real, threshold, leave_idx, return_idx, transition,
                  policy_leave=None, policy_return=None, Wf_g=None, Wp_g=None, r_f=None, r_p=None,
                  flows=None, origin=None, destination=None, age_mig_max=None,
-                 kappa=None, return_cost=None, role_ratio=None, land_o2d=None, land_d2o=None):
+                 kappa=None, return_cost=None, role_ratio=None, land_o2d=None, land_d2o=None,
+                 pop_mass=None, p_move=None, sigma_impl=None):
         self.ages = ages
         self.positions = positions
         self.real = real
@@ -244,3 +244,6 @@ class BellmanResult:
         self.role_ratio = role_ratio        # prime à rôle comparable (D7) utilisée à l'atterrissage
         self.land_o2d = land_o2d            # indices d'atterrissage origine -> destination
         self.land_d2o = land_d2o            # indices d'atterrissage destination -> origine
+        self.pop_mass = pop_mass            # masse de population par ancre (Voronoi) = stationnaire
+        self.p_move = p_move                # mobilité de la proposition, calibrée sur sigma_eta
+        self.sigma_impl = sigma_impl        # choc permanent implicite de la transition (vs D11)
