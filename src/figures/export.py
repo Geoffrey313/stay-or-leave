@@ -81,7 +81,8 @@ def export_all(full: bool = False) -> dict:
 
     # ---- régime d'élite (A=0) : régions de politique (grilles) et départs par âge
     dyn_dep = dyn.model_copy(update={"amenity": 0.0, "kappa": 20000.0})
-    res = bellman_solve("fr", "us", col, pen, tax, house, cal, dyn_dep, role_ratio=1.27)
+    res = bellman_solve("fr", "us", col, pen, tax, house, cal, dyn_dep, role_ratio=1.27,
+                        return_V=True)  # return_V : instantanés de V pour B9/B9b (lecture BCW)
 
     def _grid_rows(polmap):
         rows = []
@@ -100,6 +101,43 @@ def export_all(full: bool = False) -> dict:
     h["B11_departures"] = write_dat("B11_departures", ["age", "dep"],
                                     [(a, dep[a]) for a in sorted(dep)])
     cref = res.cref
+
+    # ---- B9 + B9b (lecture Bolton-Chen-Wang) : valeur de RESTER vs valeur de PARTIR en fonction du
+    #      patrimoine W_f, et valeur marginale du patrimoine dV/dW_f (différence finie), à position
+    #      d'élite (P90), âge représentatif, durée d=0, droit répartition W_p=0. v_stay/v_move =
+    #      analogue de p(w) (concavité = aversion) ; dv = analogue de p'(w) (prix implicite d'un euro).
+    #      Le croisement v_move = v_stay est la frontière de migration EN PATRIMOINE ; l'écart de valeur
+    #      marginale (dv_move vs dv_stay) dit si un euro vaut plus à l'étranger qu'à domicile.
+    snap = res.V_snapshots or {}
+    if snap:
+        age_b9 = 35 if 35 in snap else sorted(snap)[len(snap) // 2]
+        pos_b9 = res.positions.index("P90") if "P90" in res.positions else len(res.positions) - 1
+        wf = res.Wf_g
+        Vs = snap[age_b9]["stay"][pos_b9, 0, :, 0]
+        Vm = snap[age_b9]["move"][pos_b9, 0, :, 0]
+        dVs = np.gradient(Vs, wf)   # valeur marginale du patrimoine (rester), par euro
+        dVm = np.gradient(Vm, wf)   # valeur marginale du patrimoine (partir), par euro
+        # Les NIVEAUX v_stay/v_move se superposent presque (dominés par la rente terminale de
+        # patrimoine, commune aux deux options) : l'objet informatif est leur ECART (prime nette de
+        # départ) et la valeur marginale (analogue p'(w) de BCW). On exporte aussi delta = partir-rester.
+        h["B9_value"] = write_dat("B9_value", ["wf", "v_stay", "v_move", "delta", "dv_stay", "dv_move"],
+                                  [(float(wf[k] / 1e6), float(Vs[k]), float(Vm[k]),
+                                    float(Vm[k] - Vs[k]),
+                                    float(dVs[k] * 1e6), float(dVm[k] * 1e6)) for k in range(len(wf))])
+        h["_B9_age"] = age_b9
+        h["_B9_pos"] = res.positions[pos_b9]
+
+    # ---- B10 : seuil de migration par âge (barrière, analogue de la barrière de versement w̄ de BCW).
+    #      Rang seuil de DÉPART (leave) et de RETOUR (return) au point représentatif, extraits des
+    #      politiques (aucune plomberie). nan = pas de seuil à cet âge-là.
+    rows = []
+    for a in res.ages[:-1]:
+        li = res.leave_idx.get(a)
+        if li is None:          # au-delà de l'âge de régularité, plus de seuil de départ : on n'émet pas
+            continue            # (aucun nan dans le .dat ; la disparition du seuil est dite dans le texte)
+        ri = res.return_idx.get(a)
+        rows.append((a, float(li), float(ri) if ri is not None else float(li)))
+    h["B10_threshold"] = write_dat("B10_threshold", ["age", "leave_pos", "return_pos"], rows)
 
     if full:
         # ---- B12 : net FR->CH vs amenite

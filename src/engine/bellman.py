@@ -199,7 +199,8 @@ def solve(origin: str, destination: str, col: Dict[str, CostOfLiving],
           pension: Dict[str, PensionParams], tax: Dict[str, CapitalTax],
           housing: Dict[str, Housing], cal: Calibration, dyn: Dynamics,
           role_ratio: float | None = None, ownership: bool = False, dest_appeal: float = 0.0,
-          nf: int = 12, npp: int = 8, Wf_max: float = 6_000_000.0, Wp_max: float = 2_000_000.0):
+          nf: int = 12, npp: int = 8, Wf_max: float = 6_000_000.0, Wp_max: float = 2_000_000.0,
+          return_V: bool = False, V_ages: tuple = (25, 35, 50)):
     """Résout la Bellman à TROIS accumulateurs (W_f funded, W_p répartition, W_h équité logement).
 
     W_h n'est PAS une grille continue : l'équité est déterministe à durée de détention donnée, donc
@@ -214,6 +215,11 @@ def solve(origin: str, destination: str, col: Dict[str, CostOfLiving],
     résidence, W_p (répartition, vesté) au taux sûr. Atterrissage en rang net du niveau (role_ratio,
     D7). Coût de retour croissant avec la durée (D8). Utilité commensurable u(c/c_ref), terminal
     annuité par le même u (aversion partout). role_ratio=1 redonne phi=1.
+
+    return_V (ADDITIF, défaut False, bloc SL-US-02) : si True, sauvegarde un instantané de la fonction
+    valeur V (les deux pays) aux âges de V_ages, pour la lecture « façon Bolton-Chen-Wang » (valeur et
+    valeur marginale du patrimoine). Par défaut la branche n'est jamais prise : le chemin figé (porte du
+    solveur, SMM, moments de tête) est bit-identique par construction, aucune copie n'est allouée.
     """
     if role_ratio is None:
         wp = load_wage_premium()
@@ -285,10 +291,15 @@ def solve(origin: str, destination: str, col: Dict[str, CostOfLiving],
         return ev
 
     policy_leave, policy_return = {}, {}
+    V_snapshots = {} if return_V else None
     for t in reversed(ages[:-1]):
         Vn = {c: np.empty((npos, nd, nf, npp)) for c in countries}
         lg = np.zeros((npos, nd, nf, npp), dtype=bool)
         rg = np.zeros((npos, nd, nf, npp), dtype=bool)
+        cap = return_V and (t in V_ages)   # capture additive (SL-US-02) à cet âge
+        if cap:                            # valeurs INTERNES rester / partir au départ, origine
+            stay_o = np.empty((npos, nd, nf, npp))
+            move_o = np.full((npos, nd, nf, npp), np.nan)
         for c in countries:
             other = destination if c == origin else origin
             A_here = dyn.amenity if c == origin else dest_appeal   # attache au pays (origine) ou appel de destination (eta)
@@ -300,6 +311,8 @@ def solve(origin: str, destination: str, col: Dict[str, CostOfLiving],
                 wp_n = Wp_g * (1 + r_p) + sp
                 dn_map, wfa_map = _transition_maps(ip, wf_n, H[c], netsaleA[c], nd, Dcap, npos, H[c]["down"])
                 stay = _crra((cons[:, None, None] + A_here) / cref, g) + beta * cont(c, ip, dn_map, wfa_map, wp_n)
+                if cap and c == origin:
+                    stay_o[ip] = stay
                 best = stay
                 if t <= dyn.age_mig_max:
                     # le migrant NE capitalise PAS dans c : base = patrimoine DÉBUT de période (Wf_g),
@@ -335,6 +348,8 @@ def solve(origin: str, destination: str, col: Dict[str, CostOfLiving],
                             dn_m[ip2] = np.zeros(nd, int)
                             wfa_m[ip2] = wf_m + (netsaleA[other][d_land] if owner_now_land else 0.0)
                     move = _crra(cons_move / cref, g)[:, :, None] + beta * cont(other, il, dn_m, wfa_m, wp_m)
+                    if cap and c == origin:
+                        move_o[ip] = move
                     best = np.maximum(stay, move)
                     if c == origin:
                         lg[ip] = move > stay
@@ -344,6 +359,9 @@ def solve(origin: str, destination: str, col: Dict[str, CostOfLiving],
         V = Vn
         policy_leave[t] = lg
         policy_return[t] = rg
+        if cap:   # instantané additif (SL-US-02) : valeurs rester/partir (origine) + valeur de résidence
+            V_snapshots[t] = {"stay": stay_o, "move": move_o,
+                              origin: V[origin].copy(), destination: V[destination].copy()}
 
     # seuil de départ par âge au point représentatif (patrimoine nul, durée ~ ancienneté si proprio)
     thr_o = H[origin]["thr"]
@@ -371,7 +389,7 @@ def solve(origin: str, destination: str, col: Dict[str, CostOfLiving],
                          kappa=dyn.kappa, return_cost=return_cost, role_ratio=role_ratio,
                          land_o2d=o2d, land_d2o=d2o, pop_mass=pop_mass,
                          p_move=p_move, sigma_impl=sigma_impl, cref=cref,
-                         ownership=ownership, nd=nd, sim=sim)
+                         ownership=ownership, nd=nd, sim=sim, V_snapshots=V_snapshots)
 
 
 class BellmanResult:
@@ -382,7 +400,7 @@ class BellmanResult:
                  flows=None, origin=None, destination=None, age_mig_max=None,
                  kappa=None, return_cost=None, role_ratio=None, land_o2d=None, land_d2o=None,
                  pop_mass=None, p_move=None, sigma_impl=None, cref=None,
-                 ownership=None, nd=None, sim=None):
+                 ownership=None, nd=None, sim=None, V_snapshots=None):
         self.ages = ages
         self.positions = positions
         self.real = real
@@ -409,3 +427,4 @@ class BellmanResult:
         self.ownership = ownership          # canal propriété actif (D4)
         self.nd = nd                        # nombre de durées de détention (axe entier)
         self.sim = sim                      # payload pour la simulation de cohorte (joint d)
+        self.V_snapshots = V_snapshots      # None, ou age -> {pays: V(npos,nd,nf,npp)} (SL-US-02, additif)
