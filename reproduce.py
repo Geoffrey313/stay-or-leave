@@ -316,6 +316,24 @@ def main(full: bool = False) -> None:
     print("    Propriété-ON reste un SWITCH (ownership=True), jamais le défaut tant que ces marges ne sont")
     print("    pas modélisées. Solveur 3 accumulateurs = baseline sans logement bit-à-bit quand OFF.")
 
+    # --- US-01 : corridor FR->CH, test PROPRE de la bascule répartition->capitalisation ---
+    print("\n=== US-01 : corridor FR->CH (bascule obligatoire), vs FR->US (canal du surplus) ===")
+    dref2 = dyn.model_copy(update={"amenity": 0.0, "kappa": 20000.0})
+    for dest in ("us", "ch"):
+        sm = simulate_moments(bellman_solve("fr", dest, col, pen, tax, house, cal, dref2, ownership=False))
+        print(f"      FR->{dest} @A=0,kappa=20000 : net={sm['abroad_share_end']:.3f} bruts={sm['emigrant_share']:.3f}"
+              f" retour={sm['return_rate']:.3f}")
+    print("    Cascade CH fine ancrée OFS LSE 2022 (P10/P50/P90 sourcés) ; retraite CH mixte capée")
+    print("    (AVS répartition droit plafonné ~88200 ; BVG CAPITALISÉ obligatoire tranche coordonnée).")
+    print("    CH porte le plus gros pilier funded OBLIGATOIRE des neuf -> test propre du mécanisme phare.")
+    print("    Résultat : à A=0, FR->CH net~1,0 (toute la cohorte part) vs FR->US ~0,07. La Suisse étant")
+    print("    uniformément plus riche (disposable réel ~+54% vs FR) + BVG à r_mkt, la bascule domine à")
+    print("    TOUS les rangs -> le départ est quasi-bimodal en A (net 1,0 à A=0 -> ~0 vers A~0,48 c_ref).")
+    print("    L'aménité A est donc SHARPEMENT identifiée par le NIVEAU du flux FR->CH, et GRANDE (il faut")
+    print("    une forte attache au pays pour expliquer que tout le monde n'émigre pas vers une Suisse plus")
+    print("    riche) -> l'OPPOSÉ des US (A~0, avantage via le surplus de l'élite). Thèse destination-")
+    print("    dépendante confirmée. SMM CH complète = en attente de moments de flux FR->CH (donnée à venir).")
+
 
 if __name__ == "__main__":
     import sys

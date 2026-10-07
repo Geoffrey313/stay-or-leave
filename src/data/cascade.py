@@ -41,5 +41,6 @@ def load_cascade(country: str) -> List[CascadePoint]:
     """Charge la cascade d'un pays, triée par profil puis coût employeur croissant."""
     path = param_file(country, "cascade.csv")
     with path.open(newline="") as fh:
-        rows = [CascadePoint(**{k: v for k, v in r.items() if v != ""}) for r in csv.DictReader(fh)]
+        reader = csv.DictReader(filter(lambda l: not l.startswith("#"), fh))  # ignore les commentaires
+        rows = [CascadePoint(**{k: v for k, v in r.items() if v != ""}) for r in reader]
     return sorted(rows, key=lambda p: (p.profile, p.cost_employer))

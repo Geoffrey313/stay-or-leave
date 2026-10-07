@@ -144,6 +144,9 @@ def _housing_params(c, own, ref, ppp, real, npos, ownership):
     """Paramètres propriété réels (bloc D4) : mensualité M, seuil d'accession thr (rang), équité par
     durée, apport, frais. ownership=False -> thr=npos (personne ne possède, baseline locataire)."""
     from src.engine.housing_channel import monthly_payment, equity_schedule
+    if not ownership or c not in own:   # pas de canal propriété pour ce pays : baseline locataire
+        return {"M": 0.0, "thr": npos, "term": 1, "eq": [0.0, 0.0], "down": 0.0,
+                "fee": 0.0, "y_immo": float("inf")}
     o = own[c]
     P = o.reference_price(ref) / ppp
     principal = P * (1 - o.down_payment_share); down = P * o.down_payment_share

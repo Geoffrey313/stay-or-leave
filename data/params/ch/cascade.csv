@@ -1,5 +1,15 @@
-country,currency,profile,cost_employer,benefits_year,disposable_year
-ch,CHF,celibataire,69528,0,55533
-ch,CHF,celibataire,103774,0,79877
-ch,CHF,celibataire,173141,0,125494
-ch,CHF,couple_2enfants,103774,6000,92282
+# Cascade statutaire CH FINE, ancrée sur la distribution OFS LSE 2022 (percentiles).
+# Construite par data-acquisition/build_theta_ch.py (hors-arbre). cost_employer=brut*1,13 ;
+# disposable=brut - AVS/ALV/BVG salariales - impôt effectif Zurich célibataire [E] (ancre
+# PwC brut 200k=19,67%). Retraite portée séparément (pension_rules.csv/split). Hors TVA et
+# hors LAMal (prime par tête -> coût de la vie). P10/P50/P90 sourcés, P25/P75 log-interp,
+# P95/P99/P99,9 Pareto (alpha=2,3), comme FR/US/UK.
+country,currency,profile,position,cost_employer,benefits_year,disposable_year
+ch,CHF,celibataire,P10,60844,0,45134
+ch,CHF,celibataire,P25,71062,0,51685
+ch,CHF,celibataire,P50,92045,0,64495
+ch,CHF,celibataire,P75,132632,0,90037
+ch,CHF,celibataire,P90,165134,0,109274
+ch,CHF,celibataire,P95,223212,0,142736
+ch,CHF,celibataire,P99,449385,0,266612
+ch,CHF,celibataire,P99.9,1222928,0,693644
