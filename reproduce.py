@@ -39,7 +39,7 @@ from src.data.wage_premium import load_wage_premium, load_education_premium, loa
 from src.engine.wage_premium import translate_rank, break_even_role_ratio
 from src.engine.simulate import simulate_moments
 from src.analysis.solver_gate import check_gate, all_pass, format_gate, amenity_identifiability
-from src.analysis.estimate_amenity_migration import estimate_amenity_curve
+from src.analysis.estimate_amenity_migration import estimate as estimate_amenity, estimate_amenity_curve
 
 SMIC_ANNUAL_COST = 28000  # borne de la zone de transferts (profil et pays de référence)
 
@@ -48,7 +48,7 @@ def _sha256(path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def main() -> None:
+def main(full: bool = False) -> None:
     countries = available_countries()
     print(f"[D1] cascades livrées : {', '.join(countries)}")
     for country in countries:
@@ -227,23 +227,35 @@ def main() -> None:
     print(f"    balayage aménité -> {byA}")
     if all_pass(gate):
         print("    => les trois conditions passent : la SMM se lit.")
-        # --- SMM (D13) : A et kappa en FONCTION du role_ratio (le seuil, pas le verdict) ---
-        curve = estimate_amenity_curve()
-        print("\n=== SMM (D13) : A et kappa en fonction de la prime de queue role_ratio ===")
-        print("    Le signe de A dépend de la prime d'occupation de queue. On publie donc A/kappa en")
-        print("    FONCTION d'elle, pas un verdict unique (discipline D7 : le seuil, pas le verdict).")
-        print(f"  {'role_ratio':>10} {'A*/c_ref':>9} {'A* ($)':>8} {'kappa* ($)':>11} {'dist':>6}  statut / source")
-        for p in curve:
-            tag = " [A EN BORNE BASSE]" if p["A_at_lower_bound"] else (" [A en borne haute]" if p["A_at_upper_bound"] else "")
-            print(f"  {p['role_ratio']:>10.2f} {p['A']/res.cref:>9.2f} {p['A']:>8.0f} {p['kappa']:>11.0f}"
-                  f" {p['distance']:>6.3f}  {p['kind']}{tag}")
-        print("    Lecture : sous le proxy éducation SOURCÉ (0,97 ~ phi=1), A est en BORNE BASSE, non")
-        print("    séparable de kappa (les flux disent seulement « A aussi bas que permis » ; sous phi~1")
-        print("    c'est kappa qui porte l'ajustement, A n'est pas identifié là). A monte vers ~0,24 c_ref")
-        print("    quand la prime de queue passe à l'élite occupationnelle — mais ce role_ratio (1,14-1,29)")
-        print("    est POSÉ, non sourcé (BLS OES / ONS ASHE, crosswalk ISCO-SOC). La revendication d'un")
-        print("    attachement au pays POSITIF chez les partants dépend donc de ce paramètre non sourcé :")
-        print("    il est à résoudre AVANT publication, sinon A reste une pure fonction du role_ratio.")
+        if full:
+            # --- SMM COMPLÈTE (D13) : A et kappa en FONCTION du role_ratio (le seuil, pas le verdict) ---
+            # Résultat de publication ; régénéré par `python reproduce.py --full` (déterministe, lourd).
+            curve = estimate_amenity_curve()
+            print("\n=== SMM COMPLÈTE (D13) : A et kappa en fonction de la prime de queue role_ratio ===")
+            print("    Le signe de A dépend de la prime d'occupation de queue. On publie donc A/kappa en")
+            print("    FONCTION d'elle, pas un verdict unique (discipline D7 : le seuil, pas le verdict).")
+            print(f"  {'role_ratio':>10} {'A*/c_ref':>9} {'A* ($)':>8} {'kappa* ($)':>11} {'dist':>6}  statut / source")
+            for p in curve:
+                tag = " [A EN BORNE BASSE]" if p["A_at_lower_bound"] else (" [A en borne haute]" if p["A_at_upper_bound"] else "")
+                print(f"  {p['role_ratio']:>10.2f} {p['A']/res.cref:>9.2f} {p['A']:>8.0f} {p['kappa']:>11.0f}"
+                      f" {p['distance']:>6.3f}  {p['kind']}{tag}")
+            print("    Lecture : sous le proxy éducation SOURCÉ (0,97 ~ phi=1), A est en BORNE BASSE, non")
+            print("    séparable de kappa (les flux disent « A aussi bas que permis » ; sous phi~1 c'est kappa")
+            print("    qui porte, A non identifié là). A monte vers ~0,24 c_ref à l'élite occupationnelle —")
+            print("    role_ratio 1,14-1,29 POSÉ, non sourcé (BLS OES / ONS ASHE). La revendication d'un")
+            print("    attachement POSITIF chez les partants dépend donc de ce paramètre non sourcé.")
+        else:
+            # --- Point SOURCÉ (défaut rapide) : SMM au role_ratio du proxy éducation ---
+            est = estimate_amenity()
+            s = est["moments_sim"]
+            bound = " [A EN BORNE BASSE]" if est["A_at_lower_bound"] else ""
+            print("\n=== SMM, point sourcé (défaut) : A et kappa au role_ratio proxy éducation ===")
+            print(f"    A* = {est['best_A']:.0f} (A/c_ref = {est['best_A']/res.cref:.2f}){bound} , "
+                  f"kappa* = {est['best_kappa']:.0f}  (distance {est['distance']:.3f})")
+            print(f"    moments : pic={s['peak_departure_age']}, net étranger={s['abroad_share_end']:.3f},"
+                  f" retour={s['return_rate']:.3f} ; observés {est['moments_obs']}")
+            print("    A en borne basse (non séparable de kappa sous phi~1). La courbe A*(role_ratio),")
+            print("    résultat de publication, est régénérée par : python reproduce.py --full")
         print("    Résidus déclarés : pic de départ et taux de retour non parfaits (moments grossiers D13).")
     else:
         print("    => une condition CASSE : estimation NON publiée (échec nommé, pas un soupçon).")
@@ -274,4 +286,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+    main(full="--full" in sys.argv)

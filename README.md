@@ -37,14 +37,21 @@ une sortie de `reproduce.py`, jamais une valeur saisie à la main.]
 
 ```
 python -m pip install -r requirements.txt
-python reproduce.py
+python reproduce.py            # chemin par défaut rapide
+python reproduce.py --full     # ajoute la courbe A*(role_ratio), lourde, déterministe
 ```
 
 La chaîne est déterministe : lecture des paramètres de `data/`, calcul de la cascade et
-des flux, résolution du benchmark statique puis de la Bellman dynamique, production des
-tableaux et figures. Les données d'entrée sont des paramètres millésime 2026, documentés
-et tracés dans `data/README.md`. Les sources, leur granularité et leur statut de collecte
-figurent dans la table de ce même fichier.
+des flux, résolution du benchmark statique puis de la Bellman dynamique, porte du solveur
+et estimation SMM, production des tableaux et figures. Les données d'entrée sont des
+paramètres millésime 2026, documentés et tracés dans `data/README.md`.
+
+Le chemin par défaut estime l'aménité et le coût de migration (SMM, bloc D13) au seul
+`role_ratio` sourcé (proxy éducation) : rapide. La **courbe `A*(role_ratio)`**, qui est le
+résultat de publication (le seuil, pas un verdict), est plus lourde (une SMM complète par
+ancre de `role_ratio`) ; elle est régénérée de façon déterministe par `python reproduce.py
+--full`. Les deux chemins passent par la même porte d'acceptation du solveur. Les sources,
+leur granularité et leur statut de collecte figurent dans la table de `data/README.md`.
 
 ## Structure
 
