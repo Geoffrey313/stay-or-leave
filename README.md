@@ -6,8 +6,8 @@ Auteur : Geoffrey Ducournau.
 
 La décision d'un salarié qualifié de rester dans son pays ou d'émigrer est formalisée
 comme un arbitrage de valeur actualisée patrimoniale sur le cycle de vie, sous coût de
-migration et sous incertitude, résolu par une équation de Bellman en récursion arrière à
-la manière de Bolton, Chen et Wang (2011). Le modèle assemble, pour un agent français face
+migration et sous incertitude, résolu par une équation de Bellman en récursion arrière. Le
+modèle assemble, pour un agent français face
 à huit destinations, une cascade socio-fiscale microsimulée du coût employeur au pouvoir
 d'achat, un coût de la vie, un flux immobilier, un surplus d'épargne investi, des
 contrepoids socialisés et une prime salariale à rôle comparable, puis estime l'attachement
