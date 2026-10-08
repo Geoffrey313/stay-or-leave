@@ -23,16 +23,21 @@ import numpy as np
 
 from src.analysis.estimate_amenity_heterogeneous import (precompute_net_by_amenity,
                                                          _trunc_normal_weights)
-from src.analysis.estimate_amenity_migration import load_observed
+from src.analysis.estimate_amenity_migration import load_observed, ROLE_RATIO_ANCHORS
 
 CORRIDORS = {"ch": "migration_moments_ch.csv", "us": "migration_moments.csv",
              "uk": "migration_moments_uk.csv"}
 
 
-def _net_arrays(kappa=20000.0, a_grid=None):
-    """net(A) par corridor sur une grille A commune (une résolution Bellman par (corridor, A))."""
+def _net_arrays(kappa=20000.0, a_grid=None, us_role_ratio=None):
+    """net(A) par corridor sur une grille A commune (une résolution Bellman par (corridor, A)).
+
+    us_role_ratio : prime à rôle comparable du corridor US. None (défaut) -> proxy éducation sourcé
+    wage_premium.role_ratio_ppp = 0,970 (résolu dans bellman.py) ; le défaut reproduit le joint
+    historique au bit près. Une valeur explicite porte la prime occupationnelle sourcée (ancres
+    1,09 moyenne / 1,27 médiane d'élite, cf. occupation_premium.csv) dans l'identification du joint."""
     a_grid = np.array([0, 2500, 5000, 7500, 10000, 12500, 15000, 20000, 30000]) if a_grid is None else np.asarray(a_grid)
-    rr = {"ch": 1.0, "us": None, "uk": None}  # CH bascule (role_ratio 1) ; US/UK proxy sourcé (0,97 / 0,789)
+    rr = {"ch": 1.0, "us": us_role_ratio, "uk": None}  # CH bascule (role_ratio 1) ; UK proxy 0,789
     net = {}
     for dest in CORRIDORS:
         by_a = precompute_net_by_amenity(dest, kappa, rr[dest], a_grid)
@@ -40,8 +45,9 @@ def _net_arrays(kappa=20000.0, a_grid=None):
     return a_grid, net
 
 
-def estimate_joint(kappa=20000.0, mu_grid=None, sigma_grid=None, delta_grid=None, a_grid=None) -> dict:
-    a_grid, net = _net_arrays(kappa, a_grid)
+def estimate_joint(kappa=20000.0, mu_grid=None, sigma_grid=None, delta_grid=None, a_grid=None,
+                   us_role_ratio=None) -> dict:
+    a_grid, net = _net_arrays(kappa, a_grid, us_role_ratio)
     obs = {d: load_observed(CORRIDORS[d])["emigrant_share"] for d in CORRIDORS}
     mu_grid = np.arange(0, 25001, 1250) if mu_grid is None else np.asarray(mu_grid)
     sigma_grid = np.array([2000, 4000, 6000, 8000, 10000, 15000]) if sigma_grid is None else np.asarray(sigma_grid)
@@ -82,7 +88,34 @@ def estimate_joint(kappa=20000.0, mu_grid=None, sigma_grid=None, delta_grid=None
                     if v2 is None or dist < v2["distance"]:
                         v2 = {"mu_A": float(mu), "sigma_A": float(sigma), "delta_CH": float(dCH),
                               "delta_UK": float(dUK), "distance": dist, "net": nets}
-    return {"obs": obs, "v1_common_only": v1, "v2_common_plus_proximity": v2, "kappa": kappa}
+    return {"obs": obs, "v1_common_only": v1, "v2_common_plus_proximity": v2, "kappa": kappa,
+            "us_role_ratio": us_role_ratio}
+
+
+def estimate_joint_band(anchors=ROLE_RATIO_ANCHORS, kappa=20000.0, mu_grid=None,
+                        sigma_grid=None, delta_grid=None, a_grid=None) -> list:
+    """Encadrement du joint sur la bande d'ancres de role_ratio du corridor US (P1, SL-US-05).
+
+    Le joint tournait le corridor US sur le seul proxy éducation 0,970 ; on le ré-estime à chaque
+    ancre sourcée (0,97 proxy, 1,09 élite moyenne, 1,27 élite médiane dirigeants ; occupation_premium.csv)
+    et on rapporte (mu_A commun, sigma_A, delta_CH, delta_UK) EN FONCTION de la prime US, pas en un
+    point. Changer la prime US déplace net(US), donc l'attache commune mu_A optimale, donc delta_UK :
+    l'encadrement rend cette propagation lisible. Chaque ancre est une estimation jointe complète."""
+    out = []
+    for rr, label in anchors:
+        r = estimate_joint(kappa=kappa, mu_grid=mu_grid, sigma_grid=sigma_grid,
+                           delta_grid=delta_grid, a_grid=a_grid, us_role_ratio=rr)
+        v2, obs = r["v2_common_plus_proximity"], r["obs"]
+        # Décomposition du résidu par corridor (garde-fou 2 SL-US-05) : la distance combinée est
+        # une somme de carrés d'écarts relatifs ; on l'expose corridor par corridor pour que le
+        # lecteur voie que le UK n'est PAS calé (reldist_UK ~ 1,0) et que l'amélioration vient de
+        # US+CH. Sans quoi une distance ~1,0 se lirait à tort comme un bon ajustement.
+        resid = {d: ((v2["net"][d] - obs[d]) / max(obs[d], 1e-6)) ** 2 for d in CORRIDORS}
+        out.append({"us_role_ratio": rr, "label": label, "mu_A": v2["mu_A"],
+                    "sigma_A": v2["sigma_A"], "delta_CH": v2["delta_CH"],
+                    "delta_UK": v2["delta_UK"], "distance": v2["distance"], "net": v2["net"],
+                    "obs": obs, "resid": resid})
+    return out
 
 
 if __name__ == "__main__":

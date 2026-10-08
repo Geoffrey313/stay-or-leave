@@ -43,7 +43,7 @@ from src.analysis.solver_gate import (check_gate, all_pass, format_gate,
                                        grid_robustness_check)
 from src.analysis.estimate_amenity_migration import estimate as estimate_amenity, estimate_amenity_curve
 from src.analysis.estimate_amenity_heterogeneous import estimate_heterogeneous
-from src.analysis.estimate_amenity_joint import estimate_joint
+from src.analysis.estimate_amenity_joint import estimate_joint, estimate_joint_band
 from src.analysis.sensitivity import sensitivity_sweep, PARAMS
 from src.analysis.smm_inference import confidence_set, confidence_set_heterogeneous
 from src.figures.export import export_all
@@ -397,6 +397,24 @@ def main(full: bool = False) -> None:
         print("      non-income). La décomposition fine attache commune vs spécifique reste non identifiée")
         print("      (mu/delta colinéaires sur CH/US ; UK n'ajoute pas de contrainte mais une mécanique")
         print("      manquante) -> données d'attachement externes requises, pas un corridor de plus.")
+        # --- P1 (SL-US-05) : prime d'élite SOURCÉE portée dans le joint, encadrement mu_A ---
+        band = estimate_joint_band()
+        print("\n    ENCADREMENT DU JOINT sur la prime US sourcée (P1 ; 0,97 proxy -> 1,27 élite médiane) :")
+        print("      (la SMM par corridor lit déjà les ancres ; ici on les porte dans le JOINT, seul resté sur 0,97)")
+        for row in band:
+            rl = {d: row["resid"][d] for d in ("us", "ch", "uk")}
+            print(f"      rr={row['us_role_ratio']:.3f} {row['label'][:30]:30s} : mu_A={row['mu_A']/res.cref:.2f} c_ref"
+                  f" delta_CH={row['delta_CH']/res.cref:.2f} delta_UK={row['delta_UK']/res.cref:.2f}")
+            print(f"         net US={row['net']['us']:.3f} CH={row['net']['ch']:.3f} UK={row['net']['uk']:.3f} (obs 0,06)"
+                  f" ; distance {row['distance']:.4f} = US {rl['us']:.4f} + CH {rl['ch']:.4f} + UK {rl['uk']:.4f}")
+        print("      Lecture (encadrement, PAS verdict) : 0,97 et 1,09 ne bougent rien (A au coin, mu_A~0,12)")
+        print("      ; à 1,27 (élite médiane) mu_A SAUTE à ~0,52 c_ref et delta_CH tombe à 0 (optimum intérieur).")
+        print("      BANDE mu_A in [0,12 ; 0,52] c_ref CONDITIONNELLE à la prime d'élite (régime bimodal,")
+        print("      signature d'identification faible ; mu_A co-varie avec la prime, pas un fait robuste). La")
+        print("      distance ~1,0 est le RATAGE UK (reldist_UK=1,0 ; US+CH pesent ~0,002) : le joint ne cale PAS")
+        print("      le UK et delta_UK n'est PAS identifié (part au bord sans effet) -> motive P2. Borne de")
+        print("      sélection : la coupe occupationnelle est une BORNE HAUTE du premium causal (sélection")
+        print("      positive) -> le vrai role_ratio est <= 1,27, la lecture penche vers le canal revenu.")
         # --- Appel de Londres MODÉLISÉ : eta_UK (pull non-income) + attache hétérogène ferme le UK ---
         huk = estimate_heterogeneous(destination="uk", moments_csv="migration_moments_uk.csv", dest_appeal=12500.0)
         suk = huk["moments_sim"]
