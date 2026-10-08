@@ -1,0 +1,25 @@
+# Environnements d'ACQUISITION (hors chaîne de reproduction, hors dépôt publié).
+# Produisent les paramètres transformés livrés dans data/. Chaque moteur a SON venv :
+# leurs pins (numpy, pandas) sont mutuellement incompatibles, donc jamais le même env.
+#
+#   .venv       (France) : openfisca-france
+#   .venv-us    (US)      : policyengine-us
+#   .venv-uk    (UK)      : policyengine-uk
+#
+# Installer séparément :
+#   python -m venv .venv    && .venv/bin/pip    install openfisca-france==176.1.2
+#   python -m venv .venv-us && .venv-us/bin/pip install policyengine-us==2.29.4
+#   python -m venv .venv-uk && .venv-uk/bin/pip install policyengine-uk==2.122.2
+#
+#   .venv-eu    (DE/IT/ES) : euromod (connecteur JRC, pilote le modèle via .NET)
+#
+#   python -m venv .venv-eu && .venv-eu/bin/pip install euromod==0.4.0
+#
+# Runtime .NET requis par le connecteur euromod, installable SANS sudo en local :
+#   curl -fsSL https://dot.net/v1/dotnet-install.sh | bash -s -- --channel 8.0 \
+#        --runtime dotnet --install-dir "$HOME/.dotnet"
+#   export DOTNET_ROOT="$HOME/.dotnet" PYTHONNET_RUNTIME=coreclr
+# Vérifié : euromod s'importe en coreclr sur ce Linux (runtime .NET 8.0.31, pas de Windows).
+# Reste l'action utilisateur : télécharger les fichiers modèle JRC (voir data-acquisition/README.md).
+#
+# À venir : barèmes statutaires codés (CH/CA/JP).
