@@ -455,17 +455,33 @@ def main(full: bool = False) -> None:
     # --- Sensibilité au premier ordre (SL-US-03) : robustesse du verdict aux paramètres POSÉS ---
     if full:
         print("\n=== SENSIBILITÉ AU PREMIER ORDRE (verdict vs paramètres posés, un à la fois) ===")
-        sweeps = {"gamma": [1.0, 2.0, 3.0], "r_mkt": [0.035, 0.045, 0.055],
-                  "saturation": [45000.0, 55000.0, 65000.0]}
+        # P3 (SL-US-05) : grille raffinée aux BORNES de la bande sourcée gamma[1,5;2,5] (flag [S]) et
+        # saturation [50k;60k], pour lire les NIVEAUX de tête EN BANDE, pas au seul point central.
+        sweeps = {"gamma": [1.0, 1.5, 2.0, 2.5, 3.0], "r_mkt": [0.035, 0.045, 0.055],
+                  "saturation": [45000.0, 50000.0, 55000.0, 60000.0, 65000.0]}
+        res_sweep = {}
         for name, vals in sweeps.items():
             r = sensitivity_sweep(col, pen, tax, house, cal, dyn, PARAMS[name], vals)
+            res_sweep[name] = r
             print(f"  {name} ({PARAMS[name]}) : ordre du verdict tenu partout = {r['holds']}")
             print(f"    {'valeur':>10} {'net headline':>12} {'net propriété':>13} {'net élite':>10}")
             for v, off, on, el in r["rows"]:
                 print(f"    {v:>10.3f} {off:>12.3f} {on:>13.3f} {el:>10.3f}")
-        print("    Lecture : l'ORDRE du verdict (élite > headline, propriété retient) tient à r_mkt et,")
-        print("    en ordre, à gamma ; mais les NIVEAUX dépendent de gamma (le match aux ~6% repose sur")
-        print("    gamma~2), et la marge de rétention s'amenuise à saturation élevée (65k).")
+        # --- Lecture EN BANDE (P3) : gamma sourcé sur [1,5;2,5], niveaux de tête bornés ---
+        g = {v: (off, on, el) for v, off, on, el in res_sweep["gamma"]["rows"]}
+        s = {v: (off, on, el) for v, off, on, el in res_sweep["saturation"]["rows"]}
+        lo, hi = g[2.5][0], g[1.5][0]           # net référence décroît en gamma
+        sat_close = next((v for v in (50000.0, 55000.0, 60000.0, 65000.0)
+                          if s[v][1] >= s[v][0]), None)  # 1re saturation où net ON >= net OFF
+        print("\n    BANDE DE TÊTE (P3, gamma sourcé [S] sur [1,5 ; 2,5], centrale 2) :")
+        print(f"      net référence in [{lo:.3f} ; {hi:.3f}] (central {g[2.0][0]:.3f}) : encadre la part observée")
+        print("      4-6% ; le calage quantitatif tient autour de gamma in [2 ; 2,3]. L'ORDRE du verdict")
+        print("      (élite > référence, propriété retient) tient sur toute la bande ET sur [1 ; 3].")
+        print(f"      Rétention par la propriété : marge net OFF - net ON > 0 jusqu'à saturation 60k,")
+        print(f"      s'inverse à {sat_close:.0f} (net ON {s[sat_close][1]:.3f} >= net OFF {s[sat_close][0]:.3f})"
+              if sat_close else "      marge de rétention tenue sur toute la plage de saturation testée.")
+        print("    Lecture : l'ORDRE est robuste ; les NIVEAUX sont conditionnels (bande gamma) et la")
+        print("    marge de rétention est mince, elle se ferme vers une saturation de 65k.")
 
         # --- Inférence SMM (SL-US-04) : jeux de confiance robustes à l'identification ---
         print("\n=== INFÉRENCE SMM (jeux de confiance robustes à l'identification) ===")

@@ -10,7 +10,7 @@ param,value,status,source
 r_rep_real,0.012,[E],"cadre ; ~ croissance masse salariale (démographie+productivité), OCDE/COR ; quasi sans risque"
 r_mkt_real,0.045,[I],"espérance réelle moyenne pondérée glide path 85->30, actif risqué ; DMS/Damodaran"
 sigma_mkt_real,0.12,[I],"volatilité réelle du rendement, cohérente glide path (actions ~0,18, obligations plus bas)"
-risk_aversion,2.0,[I],"CRRA gamma, valeur standard littérature cycle de vie"
+risk_aversion,2.0,[S],"CRRA gamma ; bande littérature cycle de vie [1,5 ; 2,5], centrale 2 (micro-estimations + choix de portefeuille) ; niveaux de tête rapportés en bande sur cette plage (SL-US-05 P3)"
 career_years,40,[I],"entrée en activité ~25 ans à retraite ~65 ans"
 discount_rate_rho,0.02,[I],"actualisation du cycle de vie ; flux à rho, stocks terminaux ramenés à rho (pré-Bellman)"
 retirement_years,20,[I],"horizon de retraite pour la valeur terminale annuité par le même u (retraite ~65 à espérance ~85)"
