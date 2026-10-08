@@ -1,103 +1,100 @@
-# Rester ou partir : un modèle dynamique d'arbitrage fiscal international du pouvoir d'achat sur le cycle de vie
+# To Stay or To Leave: A Dynamic Life-Cycle Model of the International Fiscal Arbitrage of Purchasing Power
 
-Auteur : Geoffrey Ducournau.
+Author: anonymized for double-blind review.
 
-## Résumé
+## Abstract
 
-La décision d'un salarié qualifié de rester dans son pays ou d'émigrer est formalisée
-comme un arbitrage de valeur actualisée patrimoniale sur le cycle de vie, sous coût de
-migration et sous incertitude, résolu par une équation de Bellman en récursion arrière. Le
-modèle assemble, pour un agent français face
-à huit destinations, une cascade socio-fiscale microsimulée du coût employeur au pouvoir
-d'achat, un coût de la vie, un flux immobilier, un surplus d'épargne investi, des
-contrepoids socialisés et une prime salariale à rôle comparable, puis estime l'attachement
-au pays et le coût de migration sur les flux migratoires observés. Résultats principaux :
-la France convertit le coût du travail en pouvoir d'achat de la façon la plus régressive
-des pays finement mesurés, mais à rôle comparable et en pouvoir d'achat réel le cadre
-médian ne gagne pas à partir ; le départ est un fait d'occupation d'élite et de
-destination ; le moteur de retraite n'opère que vers un pilier capitalisé obligatoire, la
-Suisse, tandis que l'avantage américain transite par le surplus d'épargne ; la propriété
-du logement retient de premier ordre et encadre l'émigration entre quatre et six pour cent.
-Le travail déplace le débat d'une arithmétique de taux nominaux vers une comparaison de
-bien-être de cycle de vie, et montre que la régressivité française ne se traduit pas en
-fuite généralisée.
+A skilled worker's decision to stay in their country or to emigrate is formalized as a
+discounted life-cycle wealth arbitrage, under a migration cost and under uncertainty, solved
+by a backward-recursion Bellman equation. For a French agent facing eight destinations, the
+model assembles a microsimulated socio-fiscal cascade from employer cost to purchasing power,
+a cost of living, a housing flow, an invested savings surplus, socialized counterweights, and
+a comparable-role wage premium, then estimates attachment to the country and the migration
+cost on observed migration flows. Main results: France converts labor cost into purchasing
+power in the most regressive way of the finely measured countries, yet at a comparable role
+and in real purchasing power the median executive does not gain by leaving; departure is a
+fact of elite occupation and of destination; the retirement engine operates only toward a
+mandatory funded pillar, Switzerland, while the American advantage transits through the
+savings surplus; home ownership retains at first order and bounds emigration between four and
+six percent. The work shifts the debate from an arithmetic of nominal rates toward a
+comparison of life-cycle welfare, and shows that French regressivity does not translate into
+generalized flight.
 
-## Questions de recherche
+## Research questions
 
-1. Où se situe la France dans la conversion du coût du travail en pouvoir d'achat, du bas
-   au haut de la distribution des gains, parmi neuf pays ?
-2. À partir de quel niveau de revenu, et pour quelle destination, l'émigration maximise la
-   valeur patrimoniale de cycle de vie, et comment ce seuil dépend-il de l'âge et de la
-   réversibilité ?
-3. Quel mécanisme économique porte l'arbitrage, et dépend-il de la destination ?
-4. Quels contrepoids socialisés inversent la conclusion au bas de la distribution ?
+1. Where does France stand in converting labor cost into purchasing power, from the bottom to
+   the top of the earnings distribution, among nine countries?
+2. Above which income level, and for which destination, does emigration maximize life-cycle
+   wealth value, and how does this threshold depend on age and on reversibility?
+3. Which economic mechanism carries the arbitrage, and does it depend on the destination?
+4. Which socialized counterweights reverse the conclusion at the bottom of the distribution?
 
-## Hypothèses
+## Hypotheses
 
-- **H1.** La conversion française du coût du travail en pouvoir d'achat est la plus
-  régressive des pays finement mesurés : le taux de conversion décroît avec le revenu et
-  atteint son plus bas au sommet.
-- **H2.** À rôle comparable et en pouvoir d'achat réel, le cadre médian ne gagne pas à
-  émigrer : la prime observée reste en deçà du seuil de bascule, si bien que le départ est
-  un fait d'occupation d'élite et de destination.
-- **H3.** La bascule de la retraite vers un actif de marché n'opère que vers une
-  destination dotée d'un pilier capitalisé obligatoire ; ailleurs, l'avantage éventuel
-  transite par le surplus d'épargne investi.
-- **H4.** Les contrepoids socialisés inversent le classement au bas de la distribution, et
-  la propriété du logement retient de premier ordre.
+- **H1.** The French conversion of labor cost into purchasing power is the most regressive of
+  the finely measured countries: the conversion rate decreases with income and reaches its
+  lowest at the top.
+- **H2.** At a comparable role and in real purchasing power, the median executive does not
+  gain by emigrating: the observed premium stays below the switching threshold, so that
+  departure is a fact of elite occupation and of destination.
+- **H3.** The switch of retirement toward a market asset operates only toward a destination
+  endowed with a mandatory funded pillar; elsewhere, the eventual advantage transits through
+  the invested savings surplus.
+- **H4.** Socialized counterweights reverse the ranking at the bottom of the distribution, and
+  home ownership retains at first order.
 
-## Résultats principaux
+## Main results
 
-Chaque chiffre est une sortie de `reproduce.py`.
+Each figure is an output of `reproduce.py`.
 
-- **H1.** Le taux de conversion brut du profil célibataire décroît en France de 72,8 % au
-  premier décile à 36,2 % au centile le plus élevé, contre 82,2 % à 62,5 % aux États-Unis
-  et 74,2 % à 56,7 % en Suisse. La France a la pente la plus négative.
-- **H2.** Le seuil de prime à rôle comparable au-delà duquel partir domine monte de 1,10 à
-  1,34 vers les États-Unis et de 1,05 à une valeur jamais atteinte vers le Royaume-Uni. La
-  prime observée vaut 0,97 vers les États-Unis et 0,79 vers le Royaume-Uni, sous le seuil à
-  toute position : le cadre type reste. Au sommet occupationnel, la prime des dirigeants
-  vaut 1,27 vers les États-Unis (partir) et 0,85 vers le Royaume-Uni (rester).
-- **H3.** À aménité nulle, la part d'agents émigrant vers la Suisse vaut l'unité, contre
-  0,07 vers les États-Unis : le pilier capitalisé obligatoire suisse fait opérer la
-  bascule, que l'absence de pilier obligatoire américain laisse passer par le surplus.
-- **H4.** Le taux de conversion élargi dépasse l'unité au bas de la distribution pour les
-  profils avec enfants (couple au premier décile : 1,22 en France, 1,73 aux États-Unis).
-  Activer la propriété fait baisser la part nette à l'étranger, et le verrouillage
-  universel sur-retient : l'émigration est encadrée entre quatre et six pour cent.
+- **H1.** The gross conversion rate of the single profile decreases in France from 72.8% at
+  the first decile to 36.2% at the top percentile, against 82.2% to 62.5% in the United States
+  and 74.2% to 56.7% in Switzerland. France has the most negative slope.
+- **H2.** The comparable-role premium threshold above which leaving dominates rises from 1.10
+  to 1.34 toward the United States and from 1.05 to a value never reached toward the United
+  Kingdom. The observed premium equals 0.97 toward the United States and 0.79 toward the
+  United Kingdom, below the threshold at every position: the typical executive stays. At the
+  occupational top, the executives premium equals 1.27 toward the United States (leave) and
+  0.85 toward the United Kingdom (stay).
+- **H3.** At zero amenity, the share of agents emigrating toward Switzerland equals one,
+  against 0.07 toward the United States: the Swiss mandatory funded pillar triggers the
+  switch, which the absence of an American mandatory pillar lets pass through the surplus.
+- **H4.** The extended conversion rate exceeds one at the bottom of the distribution for
+  profiles with children (couple at the first decile: 1.22 in France, 1.73 in the United
+  States). Activating ownership lowers the net share abroad, and universal lock-in over-retains:
+  emigration is bounded between four and six percent.
 
 ## Reproduction
 
 ```
 python -m pip install -r requirements.txt
-python reproduce.py            # chemin par défaut rapide
-python reproduce.py --full     # ajoute la courbe A*(role_ratio), lourde, déterministe
+python reproduce.py            # fast default path
+python reproduce.py --full     # adds the A*(role_ratio) curve, heavy, deterministic
 ```
 
-La chaîne est déterministe : lecture des paramètres de `data/`, calcul de la cascade et
-des flux, résolution du benchmark statique puis de la Bellman dynamique, porte du solveur
-et estimation par méthode des moments simulés, production des tableaux et figures. Les
-données d'entrée sont des paramètres millésime 2026, documentés et tracés dans
-`data/README.md`. Le chemin par défaut estime l'aménité et le coût de migration au seul
-`role_ratio` sourcé ; la courbe `A*(role_ratio)`, qui est le résultat de publication (le
-seuil, pas un verdict), est régénérée par `python reproduce.py --full`. Les deux chemins
-passent par la même porte d'acceptation du solveur.
+The chain is deterministic: reading the parameters in `data/`, computing the cascade and the
+flows, solving the static benchmark then the dynamic Bellman, the solver gate and the estimation
+by the simulated method of moments, and producing the tables and figures. The input data are
+vintage-2026 parameters, documented and traced in `data/README.md`. The default path estimates
+the amenity and the migration cost at the single sourced `role_ratio`; the `A*(role_ratio)`
+curve, which is the publication result (the threshold, not a verdict), is regenerated by
+`python reproduce.py --full`. Both paths pass through the same solver acceptance gate.
 
 ## Structure
 
 ```
-src/common/     constantes, paramètres de protocole, chemins portables
-src/data/       lecture des paramètres transformés livrés dans data/
-src/engine/     cascade fiscale, flux patrimonial, benchmark statique, Bellman
-src/analysis/   seuils, décompositions, estimation et validation sur flux
-src/figures/    scripts des figures et tableaux générés
-data/           paramètres d'entrée versionnés + registre des sources
-reproduce.py    point d'entrée déterministe de bout en bout
+src/common/     constants, protocol parameters, portable paths
+src/data/       reading of the transformed parameters shipped in data/
+src/engine/     fiscal cascade, wealth flow, static benchmark, Bellman
+src/analysis/   thresholds, decompositions, estimation and validation on flows
+src/figures/    scripts of the generated figures and tables
+data/           versioned input parameters + source registry
+reproduce.py    deterministic end-to-end entry point
 ```
 
-Les manuscrits (`manuscript/`, versions française et anglaise) et les notes de travail
-(`docs/internal/`) vivent dans l'espace de travail mais ne sont pas publiés.
+The manuscripts (`manuscript/`, French and English versions) and the working notes (`docs/`)
+live in the workspace but are not published.
 
 ## Contact
 
-G.ducournau.voisin@gmail.com
+Anonymized for double-blind review; the author's details will be restored at publication.
