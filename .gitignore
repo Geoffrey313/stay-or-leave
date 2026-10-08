@@ -12,8 +12,8 @@ manuscript/
 results/
 outputs/
 
-# --- Notes de travail, framework exploratoire, audit ---
-docs/internal/
+# --- Notes de travail, framework exploratoire, audit (tout docs/ exclu) ---
+docs/
 
 # --- Acquisition des données brutes (hors chaîne de reproduction) ---
 data-acquisition/
