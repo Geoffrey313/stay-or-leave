@@ -425,6 +425,32 @@ def main(full: bool = False) -> None:
         print("      Londres (hub anglophone/financier) est un paramètre estimable (~0,40 c_ref), et l'attache")
         print("      hétérogène mu_A~0,65 c_ref est COHÉRENTE avec CH -> l'attache commune émerge, les écarts")
         print("      inter-destinations passant par le pull income/retraite + eta, pas par une attache ad hoc.")
+        # --- P2 (SL-US-05) : validation croisée de eta (pull de Londres) ---
+        print("\n    VALIDATION CROISÉE DE eta_UK (P2 ; identification vs moment externe) :")
+        print(f"      {'eta/c_ref':>9} {'mu_A/c_ref':>10} {'net UK':>7} {'distance':>9}")
+        eta_scan = {}
+        for eta in (0.0, 7500.0, 10000.0, 12500.0, 15000.0, 20000.0):
+            he = estimate_heterogeneous(destination="uk", moments_csv="migration_moments_uk.csv", dest_appeal=eta)
+            eta_scan[eta] = (he["mu_A"], he["moments_sim"]["abroad_share_end"], he["distance"])
+            print(f"      {eta/res.cref:>9.2f} {he['mu_A']/res.cref:>10.2f} {eta_scan[eta][1]:>7.3f} {he['distance']:>9.3f}")
+        eta_star = min(eta_scan, key=lambda e: eta_scan[e][2])
+        import csv as _c2
+        uk_ext = {r["statistic"]: (r["value"], r["status"]) for r in _c2.DictReader(
+            filter(lambda l: not l.startswith("#"), open(param_file("attachment_destination_uk.csv"))))}
+        print(f"      NÉCESSITÉ : à eta=0, net UK = {eta_scan[0.0][1]:.3f} (vs 0,06) : sans pull non-income le")
+        print("      corridor UK est INAJUSTABLE à toute attache. Un pull de destination positif est requis.")
+        print(f"      IDENTIFICATION : distance minimale à eta* = {eta_star/res.cref:.2f} c_ref (plage ~0,32-0,40).")
+        print("      MAIS eta est pincé par le MOMENT UK LUI-MÊME, pas par un moment indépendant : la")
+        print("      circularité du point 2 (referee) PERSISTE, elle est désormais nommée et bornée.")
+        print(f"      CORROBORATION EXTERNE (hors flux, [S]) : role_ratio FR->UK = {uk_ext['role_ratio_fr_to_uk_managers'][0]}")
+        print(f"      (<=1 : la France sur-rémunère) -> revenu seul prédit net ~{uk_ext['income_predicted_uk_net_share'][0]} ;")
+        print(f"      or ~{float(uk_ext['french_residents_uk_ons_2020'][0]):.0f} Français au UK (~{float(uk_ext['french_residents_london_ons_2020'][0]):.0f} à Londres).")
+        print("      L'écart stock-observé vs prédiction-revenu est un pull NON-INCOME, et les motifs non")
+        print(f"      économiques dominent (amour {float(uk_ext['share_expat_reason_non_economic_dominant'][0]):.0%} > rémunération). La donnée externe corrobore")
+        print("      le SIGNE et la CLASSE de eta (grand, non-income), cohérente avec eta* ~0,3-0,4 c_ref,")
+        print("      sans l'identifier à un point. VERDICT P2 : le finding de destination (Londres sur-attire")
+        print("      hors revenu ; le UK n'est explicable qu'avec un pull non-income) est ROBUSTE ; la valeur")
+        print("      de eta est corroborée en classe, PAS identifiée indépendamment (limite honnête).")
     else:
         print("    SMM FR->CH (A* ~0,32 c_ref, corridor quasi-bimodal) : python reproduce.py --full")
 

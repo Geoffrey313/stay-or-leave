@@ -1,0 +1,19 @@
+# Corroboration EXTERNE de l'APPEL DE DESTINATION eta (pull non-income de Londres ; bloc D13, P2 SL-US-05).
+# But : valider le SIGNE et la CLASSE DE MAGNITUDE de eta INDÉPENDAMMENT du flux UK sur lequel il est
+# calé, et nommer la circularité résiduelle (eta reste identifié par le corridor UK lui-même).
+# Ce ne sont PAS un équivalent-consommation : elles ne donnent pas une valeur fine de eta en c_réf.
+# Flaggées [S] (chiffre publié) ou [D] (déduction qualitative du modèle sur donnée publiée).
+# Lecture : la prime à rôle comparable UK est <= 1 (occupation_premium.csv : dirigeants FR->UK 0,85,
+# la France SUR-rémunère vs le UK) ; le seul revenu prédit donc une émigration FR->UK quasi nulle.
+# Or ~113-169k Français résident au UK (~113k à Londres). Cet écart entre le stock observé et la
+# prédiction par le revenu est un pull NON-INCOME, indépendant du moment de flux qui cale eta. Les
+# motifs non économiques dominants (amour 25% > rémunération 13%, Observatoire BT) et le rang de
+# Londres comme destination professionnelle de tête corroborent la CLASSE (grand pull non-income),
+# cohérente avec le eta calé sur le flux (~0,3-0,4 c_réf), sans l'identifier à un point.
+statistic,value,status,source
+french_residents_uk_ons_2020,169000,[S],"~169 000 ressortissants FR au UK (ONS 2020) ; recensement 2021 E&W 163 517 passeports FR"
+french_residents_london_ons_2020,113000,[S],"~113 000 Français à Londres (estimation ONS 2020)"
+french_residents_uk_consular_register,113655,[S],"113 655 inscrits au registre consulaire UK (MEAE ; volontaire, sous-compte ; millésime daté)"
+role_ratio_fr_to_uk_managers,0.85,[S],"prime à rôle comparable dirigeants FR->UK (Eurostat SES 2018, occupation_premium.csv) : UK <= FR"
+income_predicted_uk_net_share,0.000,[D],"part nette FR->UK prédite par le SEUL revenu (role_ratio<=1) : quasi nulle ; cf. eta=0 -> net 0,000"
+share_expat_reason_non_economic_dominant,0.25,[S],"amour 25% > rémunération 13% (Observatoire expatriation BT) : motifs non économiques dominants"
